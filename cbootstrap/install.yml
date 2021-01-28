@@ -110,12 +110,21 @@
       shell: caddy reload -config /etc/caddy/Caddyfile
       when: caddy_config.changed
 
-    - name: Configure API service
-      template:
-        src: api-service
-        dest: /lib/systemd/system/cdnv3.service
-
     - name: Clone cdnv3 repo
       git:
         repo: https://github.com/natesales/cdnv3
         dest: /root/cdnv3/
+
+    - name: Configure API service
+      template:
+        src: api-service
+        dest: /lib/systemd/system/cdnv3.service
+      register: cdnv3_service
+
+    - name: Enable and start API service
+      systemd:
+        daemon_reload: true
+        name: cdnv3
+        enabled: true
+        state: restarted
+      when: cdnv3_service.changed
