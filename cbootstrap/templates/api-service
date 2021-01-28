@@ -1,0 +1,15 @@
+Description=CDNv3
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/home/username/env/bin/uvicorn myproject.asgi:application --port 5000 --host localhost
+User=cdnv3
+Group=cdnv3
+WorkingDirectory=/var/www/myproject
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
