@@ -106,12 +106,16 @@
         dest: /lib/systemd/system/cdnv3.service
 
     - name: Clone cdnv3 repo
-      become_user: cdnv3
       git:
         repo: https://github.com/natesales/cdnv3
         dest: /home/cdnv3/cdnv3/
 
+    - name: Change repo ownership
+      file:
+        path: /home/cdnv3/cdnv3/
+        owner: cdnv3
+        group: cdnv3
+
     - name: Install python requirements
       become_user: cdnv3
-      pip:
-        requirements: /home/cdnv3/cdnv3/requirements.txt
+      shell: pip3 install -r /home/cdnv3/cdnv3/requirements.txt
