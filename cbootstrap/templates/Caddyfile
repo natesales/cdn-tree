@@ -1,0 +1,3 @@
+{{ inventory_hostname }}.control.packetframe.com {
+    reverse_proxy localhost:5000
+}
