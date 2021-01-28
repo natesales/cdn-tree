@@ -1,6 +1,5 @@
 - name: Install
   hosts: controlplane
-
   tasks:
      - name: Set hosts file
        template:
@@ -42,6 +41,7 @@
           - git
           - python3
           - python3-pip
+          - cargo
 
      - name: Configure WireGuard interfaces
        template:
@@ -108,14 +108,4 @@
     - name: Clone cdnv3 repo
       git:
         repo: https://github.com/natesales/cdnv3
-        dest: /home/cdnv3/cdnv3/
-
-    - name: Change repo ownership
-      file:
-        path: /home/cdnv3/cdnv3/
-        owner: cdnv3
-        group: cdnv3
-
-    - name: Install python requirements
-      become_user: cdnv3
-      shell: pip3 install -r /home/cdnv3/cdnv3/requirements.txt
+        dest: /root/cdnv3/
