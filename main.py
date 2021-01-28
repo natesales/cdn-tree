@@ -1,13 +1,11 @@
-from typing import List
-from enum import Enum
 import logging
+from enum import Enum
+from typing import List
 
 from fastapi import FastAPI
 from pydantic import BaseModel
-from rich.logging import RichHandler
-
 from pymongo import MongoClient
-
+from rich.logging import RichHandler
 
 # Init rich logging handler
 logging.basicConfig(level="NOTSET", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
@@ -18,6 +16,7 @@ app = FastAPI()
 log.info("Connecting to MongoDB")
 db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
 log.info("Connected to MongoDB")
+
 
 # Request structures
 
@@ -55,5 +54,5 @@ async def ecas_new(eca: ECA):
         "provider": eca.provider,
         "latitude": eca.latitude,
         "longitude": eca.longitude,
-        "roeles": eca.roles
+        "roles": eca.roles
     }).inserted_id
