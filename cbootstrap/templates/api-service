@@ -1,13 +1,12 @@
 Description=CDNv3
 After=network.target
-StartLimitIntervalSec=0
 
 [Service]
 Type=simple
-ExecStart=/home/username/env/bin/uvicorn myproject.asgi:application --port 5000 --host localhost
-User=cdnv3
-Group=cdnv3
-WorkingDirectory=/var/www/myproject
+ExecStart=/usr/bin/python3 -m uvicorn main:app --reload --port 4000
+User=root
+Group=root
+WorkingDirectory=/root/cdnv3
 ExecReload=/bin/kill -s HUP $MAINPID
 Restart=always
 
