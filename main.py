@@ -1,5 +1,6 @@
 import logging
 from enum import Enum
+from os import environ
 from typing import List
 
 from fastapi import FastAPI
@@ -7,14 +8,23 @@ from pydantic import BaseModel
 from pymongo import MongoClient
 from rich.logging import RichHandler
 
+if environ.get("CDNV3_DEVELOPMENT"):
+    DEVELOPMENT = True
+else:
+    DEVELOPMENT = False
+
 # Init rich logging handler
-logging.basicConfig(level="NOTSET", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
+logging.basicConfig(level=("DEBUG" if DEVELOPMENT else "NOTSET"), format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
 log = logging.getLogger("rich")
 
 app = FastAPI(title="Packetframe Control Plane", description="Control plane for the Packetframe CDN", version="3.0.0")
 
 log.info("Connecting to MongoDB")
-db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
+if DEVELOPMENT:
+    log.debug("Using local development database")
+    db = MongoClient("localhost:27017")["cdnv3db"]
+else:  # Production replicaset
+    db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
 log.info("Connected to MongoDB")
 
 
