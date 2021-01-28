@@ -11,7 +11,7 @@ from rich.logging import RichHandler
 logging.basicConfig(level="NOTSET", format="%(message)s", datefmt="[%X]", handlers=[RichHandler()])
 log = logging.getLogger("rich")
 
-app = FastAPI()
+app = FastAPI(title="Packetframe Control Plane", description="Control plane for the Packetframe CDN", version="3.0.0")
 
 log.info("Connecting to MongoDB")
 db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
