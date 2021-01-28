@@ -1,1 +1,4 @@
 .idea/
+cbootstrap/controlplane*
+cbootstrap/hosts.yml
+cbootstrap/*.retry
