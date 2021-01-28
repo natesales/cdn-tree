@@ -49,7 +49,7 @@ class ECA(BaseModel):
 
 
 @app.post("/ecas/new")
-async def ecas_new(eca: ECA):
+async def new_eca(eca: ECA):
     return db["ecas"].insert_one({
         "provider": eca.provider,
         "latitude": eca.latitude,
