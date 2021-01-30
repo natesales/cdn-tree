@@ -29,14 +29,9 @@ console.log("Connected to MongoDB")
 
 @app.post("/ecas/new")
 async def new_eca(eca: models.ECA):
-    _id = db["ecas"].insert_one({
-        "provider": eca.provider,
-        "latitude": eca.latitude,
-        "longitude": eca.longitude,
-        "roles": eca.roles,
-        "authorized": False
-    }).inserted_id
-
+    eca_dict = eca.dict()
+    eca_dict["authorized"] = False
+    _id = db["ecas"].insert_one(eca_dict).inserted_id
     return {"id": str(_id)}
 
 
