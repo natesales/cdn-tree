@@ -1,12 +1,15 @@
 from os import environ
+from time import time
+from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Response, status
 from pymongo import MongoClient
 from rich.console import Console
 
 from models import eca as eca_models
+from models.dns import *
 
 if environ.get("CDNV3_DEVELOPMENT"):
     DEVELOPMENT = True
@@ -57,3 +60,38 @@ async def websocket_stream(websocket: WebSocket):
 
     # By this point, the node is authorized
     await websocket.send_json({"permitted": True, "message": "Accepted connection request"})
+
+
+# DNS record management
+
+def _add_record(zone: str, record: Any):
+    return db["zones"].update_one(
+        {"zone": zone}, {
+            "$push": {"records": record.dict()},
+            "$set": {"serial": str(int(time()))}
+        }
+    )
+
+
+@app.post("/records/{zone}/add")
+async def add_record(zone: str, record: dict, response: Response):
+    if record.get("type") == "A":
+        try:
+            record = ARecord(**record)
+        except Exception as e:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {"detail": str(e)}
+    elif record.get("type") == "AAAA":
+        try:
+            record = AAAARecord(**record)
+        except Exception as e:
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            return {"detail": str(e)}
+    else:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Invalid record type"}
+
+    result = _add_record(zone, record)
+    if not result.upserted_id:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Zone doesn't exist"}
