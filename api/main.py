@@ -6,7 +6,7 @@ from fastapi import FastAPI, WebSocket
 from pymongo import MongoClient
 from rich.console import Console
 
-import models
+from models import eca as eca_models
 
 if environ.get("CDNV3_DEVELOPMENT"):
     DEVELOPMENT = True
@@ -28,7 +28,7 @@ console.log("Connected to MongoDB")
 
 
 @app.post("/ecas/new")
-async def new_eca(eca: models.ECA):
+async def new_eca(eca: eca_models.ECA):
     eca_dict = eca.dict()
     eca_dict["authorized"] = False
     _id = db["ecas"].insert_one(eca_dict).inserted_id

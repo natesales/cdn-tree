@@ -4,8 +4,6 @@ from typing import List
 from pydantic import BaseModel
 
 
-# Request structures
-
 class ECAState(str, Enum):
     """
     ECAState defines temporary states that an ECA may be in
