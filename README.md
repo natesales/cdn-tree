@@ -1,6 +1,6 @@
 # Packetframe Control Plane v3
 
-Version 3 of the Packetframe CDN control plane
+Version 3 of the Packetframe CDN control plane. This is an incomplete experiment - for the real, currently-deployed code, see https://github.com/packetframe/cdn
 
 ### Development
 
