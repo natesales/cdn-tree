@@ -1,6 +1,7 @@
 from os import environ
 from time import time
 
+import requests
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import FastAPI, WebSocket, Response, status
@@ -29,6 +30,19 @@ else:  # Production replicaset
     db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
 console.log("Connected to MongoDB")
 db["zones"].create_index([("zone", ASCENDING)], unique=True)
+
+console.log("Checking cryptod connection")
+try:
+    resp = requests.get("http://localhost:8081/healthcheck")
+except requests.exceptions.ConnectionError:
+    console.log("Unable to connect to cryptod")
+    exit(1)
+else:
+    if resp.text != "ok":
+        console.log(f"cryptod connection error: HTTP {resp.status_code}")
+        exit(1)
+    else:
+        console.log("cryptod ok")
 
 
 @app.post("/ecas/new")
