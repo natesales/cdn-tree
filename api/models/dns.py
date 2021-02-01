@@ -46,6 +46,8 @@ class Zone(BaseModel):
         return v
 
 
+# DNS Records
+
 class ARecord(BaseModel):
     """
     ARecord stores a DNS record of type A
@@ -93,3 +95,19 @@ class MXRecord(BaseModel):
 
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "MX")
+
+
+class TXTRecord(BaseModel):
+    """
+    TXTRecord stores a DNS record of type TXT
+    """
+    label: str
+    ttl: int
+    value: str
+
+    @validator("label")
+    def label_validator(cls, v):
+        return label_validator(v)
+
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "TXT")
