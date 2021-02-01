@@ -1,6 +1,5 @@
 from os import environ
 from time import time
-from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
@@ -66,7 +65,7 @@ async def websocket_stream(websocket: WebSocket):
 
 # DNS record management
 
-def _add_record(zone: str, record: str):
+def _add_record(zone: str, record: dict):
     return db["zones"].update_one(
         {"zone": zone}, {
             "$push": {"records": record},
@@ -92,7 +91,7 @@ def add_zone(zone: Zone, response: Response):
 
 @app.post("/records/{zone}/add/A")
 async def add_a_record(zone: str, record: ARecord, response: Response):
-    result = _add_record(zone, str(record))
+    result = _add_record(zone, record.marshal())
     if not result.modified_count:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"detail": "Zone doesn't exist"}
@@ -100,7 +99,7 @@ async def add_a_record(zone: str, record: ARecord, response: Response):
 
 @app.post("/records/{zone}/add/AAAA")
 async def add_aaaa_record(zone: str, record: AAAARecord, response: Response):
-    result = _add_record(zone, str(record))
+    result = _add_record(zone, record.marshal())
     if not result.modified_count:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"detail": "Zone doesn't exist"}

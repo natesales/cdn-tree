@@ -19,6 +19,20 @@ def label_validator(label: str) -> str:
     return label
 
 
+def safe_dict(d: dict, rr_type: str) -> dict:
+    """
+    Cast unsafe types to strings
+    :param d: dict of potentially BSON-unsafe kv pairs
+    :param rr_type: DNS record type
+    :return: dict with casted safe types
+    """
+    for k in d:
+        if isinstance(d[k], ipaddress.IPv4Address) or isinstance(d[k], ipaddress.IPv6Address):
+            d[k] = str(d[k])
+    d["type"] = rr_type
+    return d
+
+
 class Zone(BaseModel):
     """
     Zone stores a DNS zone add request
@@ -44,8 +58,8 @@ class ARecord(BaseModel):
     def label_validator(cls, v):
         return label_validator(v)
 
-    def __str__(self) -> str:
-        return f"{self.value}"
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "A")
 
 
 class AAAARecord(BaseModel):
@@ -60,8 +74,8 @@ class AAAARecord(BaseModel):
     def label_validator(cls, v):
         return label_validator(v)
 
-    def __str__(self) -> str:
-        return f"{self.value}"
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "AAAA")
 
 
 class MXRecord(BaseModel):
@@ -77,5 +91,5 @@ class MXRecord(BaseModel):
     def label_validator(cls, v):
         return label_validator(v)
 
-    def __str__(self) -> str:
-        return f"{self.value}"
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "MX")
