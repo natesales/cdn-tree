@@ -2,10 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"github.com/miekg/dns"
 	"log"
 	"net/http"
+)
+
+var (
+	listenAddr = flag.String("l", ":8081", "addr:port to bind to")
 )
 
 // Key stores all attributes for a DNSSEC signing key
@@ -59,7 +64,7 @@ func handleNewKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/newkey", handleNewKey)
-	fmt.Println("Starting cryptod HTTP listener")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.HandleFunc("/dnssec/newkey", handleNewKey)
+	fmt.Printf("Starting cryptod HTTP listener on %s\n", *listenAddr)
+	log.Fatal(http.ListenAndServe(*listenAddr, nil))
 }
