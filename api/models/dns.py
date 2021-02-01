@@ -3,6 +3,13 @@ import ipaddress
 from pydantic import BaseModel
 
 
+class Zone(BaseModel):
+    """
+    Zone stores a DNS zone add request
+    """
+    zone: str  # DNS zone
+
+
 class ARecord(BaseModel):
     """
     ARecord stores a DNS record of type A

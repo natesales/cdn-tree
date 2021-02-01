@@ -6,10 +6,12 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import FastAPI, WebSocket, Response, status
 from pymongo import MongoClient, ASCENDING
+from pymongo.errors import DuplicateKeyError
 from rich.console import Console
 
 from models import eca as eca_models
 from models.dns import *
+from validation import *
 
 if environ.get("CDNV3_DEVELOPMENT"):
     DEVELOPMENT = True
@@ -72,6 +74,23 @@ def _add_record(zone: str, record: Any):
             "$set": {"serial": str(int(time()))}
         }
     )
+
+
+@app.post("/zones/add")
+def add_zone(zone: Zone, response: Response):
+    if not valid_zone(zone.zone):
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Invalid DNS zone"}
+
+    _zone = zone.dict()
+    # TODO: _zone["users"] = [authenticated_user]
+    try:
+        db["zones"].insert_one(_zone)
+    except DuplicateKeyError:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Zone already exists"}
+
+    return {"success": True}
 
 
 @app.post("/records/{zone}/add")
