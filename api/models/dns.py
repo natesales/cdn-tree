@@ -31,6 +31,23 @@ def ttl_validator(ttl: int) -> int:
     return ttl
 
 
+def fqdn_validator(fqdn: str) -> str:
+    """
+    Validates a FQDN or IP address
+    :param fqdn: FQDN
+    :return: FQDN if validation success
+    """
+
+    # Check if FQDN has trailing dot or is an IP address
+    try:
+        ipaddress.ip_address(fqdn)
+    except ValueError:  # Not an IP address
+        if not (fqdn.endswith(".")):
+            raise ValueError("Invalid FQDN or IP address")
+
+    return fqdn
+
+
 def safe_dict(d: dict, rr_type: str) -> dict:
     """
     Cast unsafe types to strings
@@ -116,6 +133,10 @@ class MXRecord(BaseModel):
     @validator("ttl")
     def ttl_validator(cls, v):
         return ttl_validator(v)
+
+    @validator("host")
+    def fqdn_validator(v):
+        return fqdn_validator(v)
 
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "MX")
