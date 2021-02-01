@@ -98,6 +98,15 @@ def _add_record(zone: str, record: dict):
 def add_zone(zone: Zone, response: Response):
     _zone = zone.dict()
     # TODO: _zone["users"] = [authenticated_user]
+
+    resp = requests.get(CRYPTOD_URI + "/dnssec/newkey")
+    if resp.status_code != 200:
+        console.log(f"cryptod dnssec/newkey error: HTTP {resp.status_code}")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"detail": "unable to connect to cryptography service"}
+
+    _zone["dnssec"] = resp.json()
+
     try:
         db["zones"].insert_one(_zone)
     except DuplicateKeyError:
