@@ -7,6 +7,7 @@ import (
 	"github.com/miekg/dns"
 	"log"
 	"net/http"
+	"os"
 )
 
 var (
@@ -64,6 +65,13 @@ func handleNewKey(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.Parse()
+
+	if *listenAddr == "" { // this should be impossible given the default value
+		flag.Usage()
+		os.Exit(1)
+	}
+
 	http.HandleFunc("/dnssec/newkey", handleNewKey)
 	fmt.Printf("Starting cryptod HTTP listener on %s\n", *listenAddr)
 	log.Fatal(http.ListenAndServe(*listenAddr, nil))
