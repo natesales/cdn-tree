@@ -69,7 +69,7 @@ class Zone(BaseModel):
     zone: str  # DNS zone
 
     @validator("zone")
-    def zone_validator(cls, v):
+    def zone_validator(v):
         if not (v and (re.match(r"^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][a-z0-9\-]{0,60}|[a-z0-9-]{1,30}\.[a-z]{2,})$", v) is not None) and (v != ".") and (" " not in v) and (not v.startswith("-")) and (not v.endswith("-"))):
             raise ValueError("invalid DNS zone")
         return v
@@ -86,11 +86,11 @@ class ARecord(BaseModel):
     value: ipaddress.IPv4Address
 
     @validator("label")
-    def label_validator(cls, v):
+    def label_validator(v):
         return label_validator(v)
 
     @validator("ttl")
-    def ttl_validator(cls, v):
+    def ttl_validator(v):
         return ttl_validator(v)
 
     def marshal(self) -> dict:
@@ -106,11 +106,11 @@ class AAAARecord(BaseModel):
     value: ipaddress.IPv6Address
 
     @validator("label")
-    def label_validator(cls, v):
+    def label_validator(v):
         return label_validator(v)
 
     @validator("ttl")
-    def ttl_validator(cls, v):
+    def ttl_validator(v):
         return ttl_validator(v)
 
     def marshal(self) -> dict:
@@ -127,11 +127,11 @@ class MXRecord(BaseModel):
     host: str
 
     @validator("label")
-    def label_validator(cls, v):
+    def label_validator(v):
         return label_validator(v)
 
     @validator("ttl")
-    def ttl_validator(cls, v):
+    def ttl_validator(v):
         return ttl_validator(v)
 
     @validator("host")
@@ -151,11 +151,11 @@ class TXTRecord(BaseModel):
     value: str
 
     @validator("label")
-    def label_validator(cls, v):
+    def label_validator(v):
         return label_validator(v)
 
     @validator("ttl")
-    def ttl_validator(cls, v):
+    def ttl_validator(v):
         return ttl_validator(v)
 
     def marshal(self) -> dict:
