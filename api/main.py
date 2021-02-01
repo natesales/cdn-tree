@@ -103,3 +103,11 @@ async def add_aaaa_record(zone: str, record: AAAARecord, response: Response):
     if not result.modified_count:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return {"detail": "Zone doesn't exist"}
+
+
+@app.post("/records/{zone}/add/MX")
+async def add_mx_record(zone: str, record: MXRecord, response: Response):
+    result = _add_record(zone, record.marshal())
+    if not result.modified_count:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Zone doesn't exist"}
