@@ -41,7 +41,7 @@ except requests.exceptions.ConnectionError:
     console.log("Unable to connect to cryptod")
     exit(1)
 else:
-    if resp.text != "ok":
+    if resp.status_code != 200:
         console.log(f"cryptod connection error: HTTP {resp.status_code}")
         exit(1)
     else:
