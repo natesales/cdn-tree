@@ -5,7 +5,7 @@ from typing import Any
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import FastAPI, WebSocket, Response, status
-from pymongo import MongoClient
+from pymongo import MongoClient, ASCENDING
 from rich.console import Console
 
 from models import eca as eca_models
@@ -28,6 +28,7 @@ if DEVELOPMENT:
 else:  # Production replicaset
     db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
 console.log("Connected to MongoDB")
+db["zones"].create_index([("zone", ASCENDING)], unique=True)
 
 
 @app.post("/ecas/new")
