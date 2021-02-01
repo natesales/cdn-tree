@@ -73,6 +73,10 @@ func main() {
 	}
 
 	http.HandleFunc("/dnssec/newkey", handleNewKey)
+	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintln(w, "ok")
+	})
+
 	fmt.Printf("Starting cryptod HTTP listener on %s\n", *listenAddr)
 	log.Fatal(http.ListenAndServe(*listenAddr, nil))
 }

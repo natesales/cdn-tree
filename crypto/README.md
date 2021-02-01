@@ -15,3 +15,4 @@ Usage of cryptod:
 | Route | Method | Usage |
 | ------ | ------ | ------ |
 | /dnssec/newkey | GET | Generate a new DNSSEC signing key |
+| /healthcheck | GET | Return ok if server is running |
