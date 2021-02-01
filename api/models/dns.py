@@ -19,6 +19,18 @@ def label_validator(label: str) -> str:
     return label
 
 
+def ttl_validator(ttl: int) -> int:
+    """
+    Validate a DNS ttl
+    :param ttl: DNS TTL
+    :return: TTL if validation success
+    """
+
+    if not (ttl >= 30) and (ttl < 2147483646):
+        raise ValueError("TTL out of bounds")
+    return ttl
+
+
 def safe_dict(d: dict, rr_type: str) -> dict:
     """
     Cast unsafe types to strings
@@ -60,6 +72,10 @@ class ARecord(BaseModel):
     def label_validator(cls, v):
         return label_validator(v)
 
+    @validator("ttl")
+    def ttl_validator(cls, v):
+        return ttl_validator(v)
+
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "A")
 
@@ -75,6 +91,10 @@ class AAAARecord(BaseModel):
     @validator("label")
     def label_validator(cls, v):
         return label_validator(v)
+
+    @validator("ttl")
+    def ttl_validator(cls, v):
+        return ttl_validator(v)
 
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "AAAA")
@@ -93,6 +113,10 @@ class MXRecord(BaseModel):
     def label_validator(cls, v):
         return label_validator(v)
 
+    @validator("ttl")
+    def ttl_validator(cls, v):
+        return ttl_validator(v)
+
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "MX")
 
@@ -108,6 +132,10 @@ class TXTRecord(BaseModel):
     @validator("label")
     def label_validator(cls, v):
         return label_validator(v)
+
+    @validator("ttl")
+    def ttl_validator(cls, v):
+        return ttl_validator(v)
 
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "TXT")
