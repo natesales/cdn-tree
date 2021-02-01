@@ -4,6 +4,9 @@ from pydantic import BaseModel
 
 
 class ARecord(BaseModel):
+    """
+    ARecord stores a DNS record of type A
+    """
     label: str
     ttl: int
     value: ipaddress.IPv4Address
@@ -13,6 +16,9 @@ class ARecord(BaseModel):
 
 
 class AAAARecord(BaseModel):
+    """
+    AAAARecord stores a DNS record of type AAAA
+    """
     label: str
     ttl: int
     value: ipaddress.IPv6Address
@@ -22,6 +28,9 @@ class AAAARecord(BaseModel):
 
 
 class MXRecord(BaseModel):
+    """
+    MXRecord stores a DNS record of type MX
+    """
     label: str
     ttl: int
     priority: int
