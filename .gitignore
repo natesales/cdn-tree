@@ -2,3 +2,4 @@
 cbootstrap/controlplane*
 cbootstrap/hosts.yml
 cbootstrap/*.retry
+crypto/crypto
