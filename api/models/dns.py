@@ -160,3 +160,43 @@ class TXTRecord(BaseModel):
 
     def marshal(self) -> dict:
         return safe_dict(self.dict(), "TXT")
+
+
+class NSRecord(BaseModel):
+    """
+    NSRecord stores a DNS record of type NS
+    """
+    label: str
+    ttl: int
+    value: str
+
+    @validator("label")
+    def label_validator(v):
+        return label_validator(v)
+
+    @validator("value")
+    def fqdn_validator(v):
+        return fqdn_validator(v)
+
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "NS")
+
+
+class CNAMERecord(BaseModel):
+    """
+    CNAMERecord stores a DNS record of type CNAME
+    """
+    label: str
+    ttl: int
+    value: str
+
+    @validator("label")
+    def label_validator(v):
+        return label_validator(v)
+
+    @validator("value")
+    def fqdn_validator(v):
+        return fqdn_validator(v)
+
+    def marshal(self) -> dict:
+        return safe_dict(self.dict(), "CNAME")
