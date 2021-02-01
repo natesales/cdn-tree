@@ -12,6 +12,9 @@ from rich.console import Console
 from models import eca as eca_models
 from models.dns import *
 
+MONGODB_URI = "mongodb://localhost:27017"
+CRYPTOD_URI = "http://localhost:8081"
+
 if environ.get("CDNV3_DEVELOPMENT"):
     DEVELOPMENT = True
 else:
@@ -25,15 +28,15 @@ app = FastAPI(title="Packetframe Control Plane", description="Control plane for 
 console.log("Connecting to MongoDB")
 if DEVELOPMENT:
     console.log("Using local development database")
-    db = MongoClient("localhost:27017")["cdnv3db"]
+    db = MongoClient(MONGODB_URI)["cdnv3db"]
 else:  # Production replicaset
-    db = MongoClient("localhost:27017", replicaSet="cdnv3")["cdnv3db"]
+    db = MongoClient(MONGODB_URI, replicaSet="cdnv3")["cdnv3db"]
 console.log("Connected to MongoDB")
 db["zones"].create_index([("zone", ASCENDING)], unique=True)
 
 console.log("Checking cryptod connection")
 try:
-    resp = requests.get("http://localhost:8081/healthcheck")
+    resp = requests.get(CRYPTOD_URI + "/healthcheck")
 except requests.exceptions.ConnectionError:
     console.log("Unable to connect to cryptod")
     exit(1)
