@@ -9,8 +9,9 @@ from pymongo import MongoClient, ASCENDING
 from pymongo.errors import DuplicateKeyError
 from rich.console import Console
 
-from models import eca as eca_models
+from models.eca import *
 from models.dns import *
+from models.auth import *
 
 MONGODB_URI = "mongodb://localhost:27017"
 CRYPTOD_URI = "http://localhost:8081"
@@ -49,7 +50,7 @@ else:
 
 
 @app.post("/ecas/new")
-async def new_eca(eca: eca_models.ECA):
+async def new_eca(eca: ECA):
     eca_dict = eca.dict()
     eca_dict["authorized"] = False
     _id = db["ecas"].insert_one(eca_dict).inserted_id
@@ -79,8 +80,8 @@ async def websocket_stream(websocket: WebSocket):
     # By this point, the node is authorized
     await websocket.send_json({"permitted": True, "message": "Accepted connection request"})
 
-    while True:
-        connection_request = await websocket.receive_json()
+    # while True:
+    #     connection_request = await websocket.receive_json()
 
 
 # DNS record management
@@ -99,13 +100,13 @@ async def add_zone(zone: Zone, response: Response):
     _zone = zone.dict()
     # TODO: _zone["users"] = [authenticated_user]
 
-    resp = requests.get(CRYPTOD_URI + "/dnssec/newkey")
-    if resp.status_code != 200:
-        console.log(f"cryptod dnssec/newkey error: HTTP {resp.status_code}")
+    _resp = requests.get(CRYPTOD_URI + "/dnssec/newkey")
+    if _resp.status_code != 200:
+        console.log(f"cryptod dnssec/newkey error: HTTP {_resp.status_code}")
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"detail": "unable to connect to cryptography service"}
 
-    _zone["dnssec"] = resp.json()
+    _zone["dnssec"] = _resp.json()
 
     try:
         db["zones"].insert_one(_zone)
