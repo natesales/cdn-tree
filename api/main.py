@@ -9,9 +9,9 @@ from pymongo import MongoClient, ASCENDING
 from pymongo.errors import DuplicateKeyError
 from rich.console import Console
 
-from models.eca import *
-from models.dns import *
 from models.auth import *
+from models.dns import *
+from models.eca import *
 
 MONGODB_URI = "mongodb://localhost:27017"
 CRYPTOD_URI = "http://localhost:8081"
@@ -33,7 +33,10 @@ if DEVELOPMENT:
 else:  # Production replicaset
     db = MongoClient(MONGODB_URI, replicaSet="cdnv3")["cdnv3db"]
 console.log("Connected to MongoDB")
+
+# Create unique indices
 db["zones"].create_index([("zone", ASCENDING)], unique=True)
+db["users"].create_index([("email", ASCENDING)], unique=True)
 
 console.log("Checking cryptod connection")
 try:
@@ -48,6 +51,26 @@ else:
     else:
         console.log("cryptod ok")
 
+
+# User authentication
+
+@app.post("/auth/signup")
+async def signup(user: User, response: Response):
+    try:
+        _user = user.dict()
+
+        # Set user default values
+        _user["enabled"] = False
+        _user["admin"] = False
+        db["users"].insert_one(_user)
+    except DuplicateKeyError:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"detail": "User already exists"}
+    else:
+        return {"detail": "Signup success"}
+
+
+# ECA routes
 
 @app.post("/ecas/new")
 async def new_eca(eca: ECA):
