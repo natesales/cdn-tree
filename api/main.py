@@ -116,6 +116,16 @@ async def add_zone(zone: Zone, response: Response):
     return {"success": True}
 
 
+@app.delete("/zones/{zone}")
+async def delete_zone(zone: str, response: Response):
+    mod = db["zones"].delete_one({"zone": zone})
+    if mod.deleted_count > 0:
+        return {"detail": "Zone deleted successfully"}
+    else:
+        response.status_code = status.HTTP_400_BAD_REQUEST
+        return {"detail": "Zone doesn't exist"}
+
+
 # Record adders
 
 @app.post("/records/{zone}/add/A")
