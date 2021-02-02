@@ -95,7 +95,7 @@ def _add_record(zone: str, record: dict):
 
 
 @app.post("/zones/add")
-def add_zone(zone: Zone, response: Response):
+async def add_zone(zone: Zone, response: Response):
     _zone = zone.dict()
     # TODO: _zone["users"] = [authenticated_user]
 
