@@ -2,9 +2,7 @@ from os import environ
 from time import time
 
 import requests
-from bson import ObjectId
-from bson.errors import InvalidId
-from fastapi import FastAPI, WebSocket, Response, status
+from fastapi import FastAPI, Response, status
 from pymongo import MongoClient, ASCENDING
 from pymongo.errors import DuplicateKeyError
 from rich.console import Console
@@ -78,33 +76,6 @@ async def new_eca(eca: ECA):
     eca_dict["authorized"] = False
     _id = db["ecas"].insert_one(eca_dict).inserted_id
     return {"id": str(_id)}
-
-
-@app.websocket("/ws")
-async def websocket_stream(websocket: WebSocket):
-    await websocket.accept()
-    console.log(f"Opened websocket from {websocket.client.host} {websocket.client_state}")
-    connection_request = await websocket.receive_json()
-
-    try:
-        object_id = ObjectId(connection_request.get("id"))
-    except InvalidId:
-        console.log(f"Rejecting invalid ObjectId: {connection_request}")
-        await websocket.send_json({"permitted": False, "message": "Invalid node ID"})
-        return
-
-    eca_doc = db["ecas"].find_one({
-        "_id": object_id
-    })
-
-    if not eca_doc.get("authorized"):
-        await websocket.send_json({"permitted": False, "message": "Not authorized"})
-
-    # By this point, the node is authorized
-    await websocket.send_json({"permitted": True, "message": "Accepted connection request"})
-
-    # while True:
-    #     connection_request = await websocket.receive_json()
 
 
 # DNS record management

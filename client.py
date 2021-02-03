@@ -1,53 +1,64 @@
 import socketio
+from rich.console import Console
 
+console = Console()
 sio = socketio.Client()
 
 eca_id = "601496f63d405ca2e88d8c6e"
 
-print("Connecting to control plane")
+console.log("Connecting to control plane")
 try:
     sio.connect("http://localhost:3000", headers={"X-Packetframe-ECA-Auth": eca_id})
 except socketio.exceptions.ConnectionError as e:
-    print(e)
+    console.log(e)
     exit(1)
 else:
-    print("Connected to control plane")
+    console.log("Connected to control plane")
 
 
 @sio.event
 def connect():
-    print("connected")
+    console.log("connected")
 
 
 @sio.event
 def disconnect():
-    print("disconnected")
+    console.log("disconnected")
     sio.disconnect()
 
 
 @sio.on
 def message(data):
-    print(data)
+    console.log(data)
 
 
 @sio.on("metadata")
 def on_metadata(data):
-    print("metadata", data)
+    console.log("metadata", data)
 
 
 @sio.on("global_ping")
 def on_global_ping():
     sio.emit("global_pong")
-    print("ping")
+    console.log("ping")
 
 
 @sio.on("terminate")
 def on_reject(data):
     """
+    """
     Forcefully terminate the connection
     :param data:
     :return:
     """
-    print("terminating connection", data)
+    console.log("terminating connection", data)
+    sio.disconnect()
+    exit(2)
+
+    Forcefully terminate the connection
+    :param data:
+    :return:
+    """
+    console.log("terminating connection", data)
     sio.disconnect()
     exit(2)
