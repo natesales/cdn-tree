@@ -17,33 +17,24 @@ type Database struct {
 	Db *mongo.Database
 }
 
-// Node stores a single edge node
-type Node struct {
-	ID         string  `json:"id,omitempty" bson:"_id,omitempty"`
-	Provider   string  `json:"provider"`
-	Latitude   float32 `json:"latitude"`
-	Longitude  float32 `json:"longitude"`
-	Authorized bool    `json:"authorized"`
-}
-
 // Functions
 
-// newContext returns a context with given duration
-func newContext(duration time.Duration) context.Context {
+// NewContext returns a context with given duration
+func NewContext(duration time.Duration) context.Context {
 	ctx, _ := context.WithTimeout(context.Background(), duration)
 	return ctx
 }
 
 // New constructs a new database object
 func New(url string) *Database {
-	ctx := newContext(10 * time.Second)
+	ctx := NewContext(10 * time.Second)
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Check the connection
-	ctx = newContext(10 * time.Second)
+	ctx = NewContext(10 * time.Second)
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +54,7 @@ func (d Database) GetNode(id string) bson.M {
 	}
 
 	var node bson.M
-	ctx := newContext(10 * time.Second)
+	ctx := NewContext(10 * time.Second)
 	// Run DB query
 	if err := d.Db.Collection("nodes").FindOne(ctx, bson.M{"_id": nodeObjectId}).Decode(&node); err != nil {
 		if err.Error() == "mongo: no documents in result" {
@@ -82,15 +73,4 @@ func (d Database) GetNode(id string) bson.M {
 	}
 
 	return node
-}
-
-// AddNode inserts a new node into the database
-func (d Database) AddNode(provider string, latitude float32, longitude float32) {
-	node := Node{"", provider, latitude, longitude, false} // Let mongo generate it's own ObjectId for the document
-	insertResult, err := d.Db.Collection("nodes").InsertOne(newContext(10*time.Second), node)
-	if err != nil {
-		log.Warn(err)
-	}
-
-	log.Println("Inserted new object", insertResult)
 }

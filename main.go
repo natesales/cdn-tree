@@ -6,12 +6,14 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/transport"
+	"github.com/natesales/cdnv3/internal/types"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 var (
 	sio *socketio.Server // Socket.IO server
+	db  *database.Database
 )
 
 // HTTP endpoint handlers
@@ -33,10 +35,29 @@ func handleConnections(c *fiber.Ctx) error {
 	return c.SendString("Displayed connections")
 }
 
+// handleAddNode handles a HTTP POST request to add a new node
+func handleAddNode(c *fiber.Ctx) error {
+	newNode := new(types.Node)
+
+	// Parse body into struct
+	if err := c.BodyParser(newNode); err != nil {
+		return c.Status(400).SendString(err.Error())
+	}
+
+	// Insert the new node
+	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+
+	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
+	return c.Status(201).JSON(insertionResult)
+}
+
 func main() {
 	log.SetLevel(log.DebugLevel)
 
-	db := database.New("mongodb://localhost:27017")
+	db = database.New("mongodb://localhost:27017")
 
 	// Create a new socket.io server
 	sio, err := socketio.NewServer(nil)
@@ -58,6 +79,8 @@ func main() {
 	app.Get("/ping", handlePing)
 	app.Get("/connections", handleConnections)
 	app.All("/socket.io/", adaptor.HTTPHandler(sio))
+
+	app.Post("/nodes/add", handleAddNode)
 
 	log.Println("Starting gofiber API")
 	log.Fatal(app.Listen(":3000"))
