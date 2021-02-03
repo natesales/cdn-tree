@@ -12,6 +12,7 @@ func GetAuthKey(s socketio.Conn) string {
 	return s.RemoteHeader().Get("X-Packetframe-Eca-Auth")
 }
 
+// SetupHandlers configures Socket.IO handlers to for real time event messages
 func SetupHandlers(sio *socketio.Server, db *database.Database) {
 	// Listen for socket.io client connections from ECAs
 	sio.OnConnect("/", func(s socketio.Conn) error {
