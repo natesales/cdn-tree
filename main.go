@@ -58,5 +58,7 @@ func main() {
 	app.Get("/ping", handlePing)
 	app.Get("/connections", handleConnections)
 	app.All("/socket.io/", adaptor.HTTPHandler(sio))
+
+	log.Println("Starting gofiber API")
 	log.Fatal(app.Listen(":3000"))
 }
