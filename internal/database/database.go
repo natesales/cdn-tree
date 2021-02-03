@@ -19,6 +19,7 @@ type Database struct {
 
 // Node stores a single edge node
 type Node struct {
+	ID         string  `json:"id,omitempty" bson:"_id,omitempty"`
 	Provider   string  `json:"provider"`
 	Latitude   float32 `json:"latitude"`
 	Longitude  float32 `json:"longitude"`
@@ -85,7 +86,7 @@ func (d Database) GetNode(id string) bson.M {
 
 // AddNode inserts a new node into the database
 func (d Database) AddNode(provider string, latitude float32, longitude float32) {
-	node := Node{provider, latitude, longitude, false}
+	node := Node{"", provider, latitude, longitude, false} // Let mongo generate it's own ObjectId for the document
 	insertResult, err := d.Db.Collection("nodes").InsertOne(newContext(10*time.Second), node)
 	if err != nil {
 		log.Warn(err)
