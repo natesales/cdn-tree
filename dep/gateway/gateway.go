@@ -1,57 +1,14 @@
 package main
 
 import (
-	"context"
 	"github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
 	"time"
 )
-
-// Enable verbose logging
-const debug = false
-
-var (
-	nodesCollection *mongo.Collection // MongoDB node collection
-	sio             *socketio.Server  // Socket.IO server
-)
-
-// newContext returns a context with given duration
-func newContext(duration time.Duration) context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), duration)
-	return ctx
-}
-
-// getAuthKey returns a ECA's provided authentication header value
-func getAuthKey(s socketio.Conn) string {
-	return s.RemoteHeader().Get("X-Packetframe-Eca-Auth")
-}
-
-// dbConnect opens a connection to the MongoDB database
-func dbConnect() {
-	// Connect to DB
-	ctx := newContext(10 * time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check the connection
-	ctx = newContext(10 * time.Second)
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Connected to database")
-
-	// Nodes DB collection
-	nodesCollection = client.Database("cdnv3db").Collection("ecas")
-}
 
 // getNode looks up a node by string ID
 func getNode(id string) bson.M {
