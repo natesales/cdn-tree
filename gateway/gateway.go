@@ -95,7 +95,7 @@ func handlePing(w http.ResponseWriter, r *http.Request) {
 func handleConnections(w http.ResponseWriter, r *http.Request) {
 	log.Println("Getting connections")
 	sio.ForEach("/", "global", func(s socketio.Conn) {
-		lastMessage := time.Since(time.Unix(s.Context().(int64), 0))
+		lastMessage := time.Since(time.Unix(s.Context().(int64), 0)).Truncate(time.Millisecond) // assert context type to int64, parse as UNIX timestamp, compute time since then, and truncate to milliseconds
 		log.Printf("%s last message %s\n", getAuthKey(s), lastMessage)
 	})
 }
