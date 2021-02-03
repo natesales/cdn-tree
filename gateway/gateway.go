@@ -12,8 +12,12 @@ import (
 	"time"
 )
 
+// Enable verbose logging
+const debug = false
+
 var (
-	nodesCollection *mongo.Collection
+	nodesCollection *mongo.Collection // MongoDB node collection
+	sio             *socketio.Server  // Socket.IO server
 )
 
 // newContext returns a context with given duration
@@ -22,6 +26,12 @@ func newContext(duration time.Duration) context.Context {
 	return ctx
 }
 
+// getAuthKey returns a ECA's provided authentication header value
+func getAuthKey(s socketio.Conn) string {
+	return s.RemoteHeader().Get("X-Packetframe-Eca-Auth")
+}
+
+// dbConnect opens a connection to the MongoDB database
 func dbConnect() {
 	// Connect to DB
 	ctx := newContext(10 * time.Second)
@@ -43,74 +53,102 @@ func dbConnect() {
 	nodesCollection = client.Database("cdnv3db").Collection("ecas")
 }
 
+// getNode looks up a node by string ID
+func getNode(id string) bson.M {
+	nodeObjectId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		log.Debug(err)
+		return nil // Invalid ObjectId
+	}
+
+	var node bson.M
+	ctx := newContext(10 * time.Second)
+	// Run DB query
+	if err := nodesCollection.FindOne(ctx, bson.M{"_id": nodeObjectId}).Decode(&node); err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			log.Debug(err)
+			return nil // Node with given ID doesn't exist, exit
+		} else { // Leaving this useless else case for future error handling
+			log.Debug(err)
+			return nil // Other error
+		}
+	}
+
+	// Check if node is authorized
+	if node["authorized"] != true { // != true is required here as we're comparing an empty interface
+		log.Debugf("Node %s is not authorized\n", id)
+		return nil
+	}
+
+	return node
+}
+
+// HTTP handlers
+
+// handlePing emits a ping message to all ECAs
+func handlePing(w http.ResponseWriter, r *http.Request) {
+	log.Println("Sending global ping")
+	sio.BroadcastToRoom("/", "global", "global_ping")
+}
+
+// handlePing emits a ping message to all ECAs
+func handleConnections(w http.ResponseWriter, r *http.Request) {
+	log.Println("Getting connections")
+	sio.ForEach("/", "global", func(s socketio.Conn) {
+		lastMessage := time.Since(time.Unix(s.Context().(int64), 0))
+		log.Printf("%s last message %s\n", getAuthKey(s), lastMessage)
+	})
+}
+
 func main() {
 	// Create a new socket.io server
-	server := socketio.NewServer(nil)
+	sio = socketio.NewServer(nil)
 
 	// Listen for socket.io client connections from ECAs
-	server.OnConnect("/", func(s socketio.Conn) error {
-		s.SetContext("") // TODO: This should store temporary ECA data for the duration of the current connection
+	sio.OnConnect("/", func(s socketio.Conn) error {
+		s.SetContext(time.Now().Unix()) // Set last message receive time
+		//s.SetContext("") // TODO: This should store temporary ECA data for the duration of the current connection
 		log.Println("ECA connected:", s.ID(), s.RemoteAddr(), s.RemoteHeader())
 
-		ecaAuthKey := s.RemoteHeader().Get("X-Packetframe-Eca-Auth")
-		ecaObjectId, err := primitive.ObjectIDFromHex(ecaAuthKey)
-		if err != nil {
-			log.Warnf("Invalid ECA ObjectId, breaking connection")
-			s.Close() // TODO: handle this better, tell the client to shut itself down
-		} else {
-			log.Println("Finding ECA", ecaObjectId)
+		node := getNode(getAuthKey(s))
+		if node == nil {
+			log.Warnf("Node not found or not allowed, terminating connection")
+			s.Emit("terminate", nil)
+			return nil // exit gracefully
 		}
 
-		var node bson.M
-		ctx := newContext(10 * time.Second)
-		if err := nodesCollection.FindOne(ctx, bson.M{"_id": ecaObjectId}).Decode(&node); err != nil {
-			if err.Error() == "mongo: no documents in result" {
-				log.Warnf("Unable to find ECA")
-			} else {
-				log.Fatal(err)
-			}
-		}
+		log.Printf("ECA %s connected, authorizing now\n", getAuthKey(s))
+		s.Join("global")
 		log.Println(node)
 
 		return nil
 	})
 
-	server.OnEvent("/", "notice", func(s socketio.Conn, msg string) {
-		log.Println("notice:", msg)
-		s.Emit("reply", "have "+msg)
+	sio.OnDisconnect("/", func(s socketio.Conn, reason string) {
+		log.Printf("ECA %s disconnected: %s\n", getAuthKey(s), reason)
 	})
 
-	server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
-		s.SetContext(msg)
-		return "recv " + msg
+	sio.OnError("/", func(s socketio.Conn, e error) {
+		log.Println("socket.io error:", e)
 	})
 
-	server.OnEvent("/", "bye", func(s socketio.Conn) string {
-		last := s.Context().(string)
-		s.Emit("bye", last)
-		s.Close()
-		return last
-	})
-
-	server.OnError("/", func(s socketio.Conn, e error) {
-		log.Println("meet error:", e)
-	})
-
-	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
-		log.Println("closed", reason)
+	sio.OnEvent("/", "global_pong", func(s socketio.Conn, e error) {
+		log.Println("Received pong from", getAuthKey(s))
+		s.SetContext(time.Now().Unix())
 	})
 
 	// Connect to database
 	dbConnect()
 
 	// start socket.io handler
-	log.Println("Starting socket server")
-	go server.Serve()
-	defer server.Close()
-	log.Println("Started socket server")
+	log.Println("Starting socket server goroutine")
+	go sio.Serve()
+	defer sio.Close()
 
 	// Setup routes
-	http.Handle("/socket.io/", server)
+	http.Handle("/socket.io/", sio)
+	http.HandleFunc("/ping", handlePing)
+	http.HandleFunc("/connections", handleConnections)
 
 	// Start HTTP server
 	log.Println("Serving at localhost:8000...")
