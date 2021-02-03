@@ -1,17 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/miekg/dns"
 	"log"
-	"net/http"
-	"os"
-)
-
-var (
-	listenAddr = flag.String("l", ":8081", "addr:port to bind to")
 )
 
 // Key stores all attributes for a DNSSEC signing key
@@ -26,8 +18,8 @@ type Key struct {
 	DSRecordString string // full DS record in zone file format
 }
 
-// newKey generates a new DNSSEC signing key for a zone
-func newKey(zone string) Key {
+// NewKey generates a new DNSSEC signing key for a zone
+func NewKey(zone string) Key {
 	key := &dns.DNSKEY{
 		Hdr:       dns.RR_Header{Name: dns.Fqdn(zone), Class: dns.ClassINET, Ttl: 3600, Rrtype: dns.TypeDNSKEY},
 		Algorithm: dns.ECDSAP256SHA256, Flags: 257, Protocol: 3,
@@ -50,33 +42,4 @@ func newKey(zone string) Key {
 		DSDigest:       ds.Digest,
 		DSRecordString: ds.String(),
 	}
-}
-
-func handleNewKey(w http.ResponseWriter, r *http.Request) {
-	key := newKey("example.com")
-	jsonResponse, err := json.Marshal(key)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(jsonResponse)
-}
-
-func main() {
-	flag.Parse()
-
-	if *listenAddr == "" { // this should be impossible given the default value
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	http.HandleFunc("/dnssec/newkey", handleNewKey)
-	http.HandleFunc("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "ok")
-	})
-
-	fmt.Printf("Starting cryptod HTTP listener on %s\n", *listenAddr)
-	log.Fatal(http.ListenAndServe(*listenAddr, nil))
 }
