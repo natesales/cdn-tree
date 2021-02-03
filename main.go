@@ -7,13 +7,11 @@ import (
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/transport"
 	log "github.com/sirupsen/logrus"
-	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 )
 
 var (
-	nodesCollection *mongo.Collection // MongoDB node collection
-	sio             *socketio.Server  // Socket.IO server
+	sio *socketio.Server // Socket.IO server
 )
 
 // HTTP endpoint handlers
@@ -38,8 +36,7 @@ func handleConnections(c *fiber.Ctx) error {
 func main() {
 	log.SetLevel(log.DebugLevel)
 
-	db := database.Connect()
-	nodesCollection = db.Collection("nodes")
+	db := database.New("mongodb://localhost:27017")
 
 	// Create a new socket.io server
 	sio, err := socketio.NewServer(nil)
