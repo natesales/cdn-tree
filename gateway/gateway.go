@@ -5,6 +5,7 @@ import (
 	"github.com/googollee/go-socket.io"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"net/http"
@@ -39,7 +40,7 @@ func dbConnect() {
 	log.Println("Connected to database")
 
 	// Nodes DB collection
-	nodesCollection = client.Database("cdnv3").Collection("nodes")
+	nodesCollection = client.Database("cdnv3db").Collection("ecas")
 }
 
 func main() {
