@@ -13,21 +13,25 @@ import (
 
 var (
 	nodesCollection *mongo.Collection
-	dbCtx           context.Context
 )
 
-func dbConnect() {
-	// Initialize DB context
-	dbCtx, _ = context.WithTimeout(context.Background(), 10*time.Second)
+// newContext returns a context with given duration
+func newContext(duration time.Duration) context.Context {
+	ctx, _ := context.WithTimeout(context.Background(), duration)
+	return ctx
+}
 
+func dbConnect() {
 	// Connect to DB
-	client, err := mongo.Connect(dbCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	ctx := newContext(10 * time.Second)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Check the connection
-	err = client.Ping(dbCtx, nil)
+	ctx = newContext(10 * time.Second)
+	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,8 +51,18 @@ func main() {
 		s.SetContext("") // TODO: This should store temporary ECA data for the duration of the current connection
 		log.Println("ECA connected:", s.ID(), s.RemoteAddr(), s.RemoteHeader())
 
+		ecaAuthKey := s.RemoteHeader().Get("X-Packetframe-Eca-Auth")
+		ecaObjectId, err := primitive.ObjectIDFromHex(ecaAuthKey)
+		if err != nil {
+			log.Warnf("Invalid ECA ObjectId, breaking connection")
+			s.Close() // TODO: handle this better, tell the client to shut itself down
+		} else {
+			log.Println("Finding ECA", ecaObjectId)
+		}
+
 		var node bson.M
-		if err := nodesCollection.FindOne(dbCtx, bson.M{"_id": "bar"}).Decode(&node); err != nil {
+		ctx := newContext(10 * time.Second)
+		if err := nodesCollection.FindOne(ctx, bson.M{"_id": ecaObjectId}).Decode(&node); err != nil {
 			if err.Error() == "mongo: no documents in result" {
 				log.Warnf("Unable to find ECA")
 			} else {
