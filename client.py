@@ -46,15 +46,6 @@ def on_global_ping():
 @sio.on("terminate")
 def on_reject(data):
     """
-    """
-    Forcefully terminate the connection
-    :param data:
-    :return:
-    """
-    console.log("terminating connection", data)
-    sio.disconnect()
-    exit(2)
-
     Forcefully terminate the connection
     :param data:
     :return:
