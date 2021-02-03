@@ -6,7 +6,7 @@ eca_id = "601496f63d405ca2e88d8c6e"
 
 print("Connecting to control plane")
 try:
-    sio.connect("http://localhost:8000", headers={"X-Packetframe-ECA-Auth": eca_id})
+    sio.connect("http://localhost:3000", headers={"X-Packetframe-ECA-Auth": eca_id})
 except socketio.exceptions.ConnectionError as e:
     print(e)
     exit(1)
