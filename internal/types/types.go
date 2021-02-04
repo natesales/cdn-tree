@@ -5,6 +5,7 @@ import "github.com/natesales/cdnv3/internal/crypto"
 // Node stores a single edge node
 type Node struct {
 	ID         string  `json:"-" bson:"_id,omitempty"`
+	Endpoint   string  `json:"endpoint" validate:"required"`
 	Provider   string  `json:"provider" validate:"required"`
 	Latitude   float32 `json:"latitude" validate:"required"`
 	Longitude  float32 `json:"longitude" validate:"required"`
