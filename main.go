@@ -70,6 +70,6 @@ func main() {
 	app.Post("/nodes/add", handleAddNode)
 	app.Post("/zones/add", handleAddZone)
 
-	log.Println("Starting gofiber API")
+	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
 }

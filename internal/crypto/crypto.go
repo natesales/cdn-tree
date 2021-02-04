@@ -1,4 +1,4 @@
-package main
+package crypto
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"log"
 )
 
-// Key stores all attributes for a DNSSEC signing key
-type Key struct {
+// DNSSECKey stores all attributes for a DNSSEC signing key
+type DNSSECKey struct {
 	Base           string `json:"base"`           // base key filename prefix
 	Key            string `json:"key"`            // DNSKEY
 	Private        string `json:"private"`        // private key
@@ -19,7 +19,7 @@ type Key struct {
 }
 
 // NewKey generates a new DNSSEC signing key for a zone
-func NewKey(zone string) Key {
+func NewKey(zone string) DNSSECKey {
 	key := &dns.DNSKEY{
 		Hdr:       dns.RR_Header{Name: dns.Fqdn(zone), Class: dns.ClassINET, Ttl: 3600, Rrtype: dns.TypeDNSKEY},
 		Algorithm: dns.ECDSAP256SHA256, Flags: 257, Protocol: 3,
@@ -32,7 +32,7 @@ func NewKey(zone string) Key {
 
 	ds := key.ToDS(dns.SHA256)
 
-	return Key{
+	return DNSSECKey{
 		Base:           fmt.Sprintf("K%s+%03d+%05d", key.Header().Name, key.Algorithm, key.KeyTag()),
 		Key:            key.String(),
 		Private:        key.PrivateKeyString(priv),
