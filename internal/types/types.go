@@ -30,6 +30,7 @@ type Zone struct {
 
 // User stores a CDN user
 type User struct {
+	ID       string `json:"-" bson:"_id,omitempty"`
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 	APIKey   string `json:"-"`

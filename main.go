@@ -41,11 +41,21 @@ func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
 	return ctx.Status(code).JSON(map[string]interface{}{"success": success, "message": message})
 }
 
-//// requireGenericAuth checks if a user is authenticated and is present in the database
-//func requireGenericAuth(ctx *fiber.Ctx) {
-//	apiKey := string(ctx.Request().Header.Peek("Authorization"))
-//	log.Println(apiKey)
-//}
+// requireGenericAuth checks if a user is authenticated and is present in the database
+func requireGenericAuth(ctx *fiber.Ctx) (error, types.User) {
+	// Get API key header
+	apiKey := string(ctx.Request().Header.Peek("Authorization"))
+
+	// Find user by API key in the database
+	var user types.User
+	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"apikey": apiKey})
+	err := result.Decode(&user)
+	if err != nil {
+		return err, types.User{}
+	}
+
+	return nil, user // no error; a user with this API key exists
+}
 
 // HTTP endpoint handlers
 
@@ -78,6 +88,11 @@ func handleAddNode(ctx *fiber.Ctx) error {
 
 // handleAddZone handles a HTTP POST request to add a new zone
 func handleAddZone(ctx *fiber.Ctx) error {
+	err, user := requireGenericAuth(ctx)
+	if err != nil {
+		return sendResponse(ctx, 400, errors.New("unauthenticated"))
+	}
+
 	newZone := new(types.Zone)
 
 	// Parse body into struct
@@ -86,7 +101,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	}
 
 	// Validate zone struct
-	err := validate.Struct(newZone)
+	err = validate.Struct(newZone)
 	if err != nil {
 		return sendResponse(ctx, 400, err)
 	}
@@ -103,7 +118,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	newZone.DNSSEC = crypto.NewKey(newZone.Zone)
 
 	// Create empty arrays
-	newZone.Users = []string{}
+	newZone.Users = []string{user.ID}
 	newZone.Records = []string{}
 
 	// Insert the new zone
