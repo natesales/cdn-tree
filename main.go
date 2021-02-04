@@ -19,20 +19,20 @@ var (
 // HTTP endpoint handlers
 
 // handlePing emits a ping message to all ECAs
-func handlePing(c *fiber.Ctx) error {
+func handlePing(ctx *fiber.Ctx) error {
 	log.Println("Sending global ping")
 	sio.BroadcastToRoom("/", "global", "global_ping")
-	return c.SendString("Sent global ping")
+	return ctx.SendString("Sent global ping")
 }
 
 // handleConnections shows a list of nodes and their last message timestamp
-func handleConnections(c *fiber.Ctx) error {
+func handleConnections(ctx *fiber.Ctx) error {
 	log.Println("Getting connections")
 	sio.ForEach("/", "global", func(s socketio.Conn) {
 		lastMessage := time.Since(time.Unix(s.Context().(int64), 0)).Truncate(time.Millisecond) // assert context type to int64, parse as UNIX timestamp, compute time since then, and truncate to milliseconds
 		log.Printf("%s last message %s\n", transport.GetAuthKey(s), lastMessage)
 	})
-	return c.SendString("Displayed connections")
+	return ctx.SendString("Displayed connections")
 }
 
 // handleAddNode handles a HTTP POST request to add a new node
@@ -52,6 +52,25 @@ func handleAddNode(c *fiber.Ctx) error {
 
 	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
 	return c.Status(201).JSON(insertionResult)
+}
+
+// handleAddZone handles a HTTP POST request to add a new zone
+func handleAddZone(ctx *fiber.Ctx) error {
+	newZone := new(types.Zone)
+
+	// Parse body into struct
+	if err := ctx.BodyParser(newZone); err != nil {
+		return ctx.Status(400).SendString(err.Error())
+	}
+
+	// Insert the new node
+	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
+	if err != nil {
+		return ctx.Status(500).SendString(err.Error())
+	}
+
+	log.Printf("Inserted new zone: %s\n", insertionResult.InsertedID)
+	return ctx.Status(201).JSON(insertionResult)
 }
 
 func main() {
@@ -81,6 +100,7 @@ func main() {
 	app.All("/socket.io/", adaptor.HTTPHandler(sio))
 
 	app.Post("/nodes/add", handleAddNode)
+	app.Post("/zones/add", handleAddZone)
 
 	log.Println("Starting gofiber API")
 	log.Fatal(app.Listen(":3000"))
