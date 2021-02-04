@@ -41,6 +41,18 @@ func New(url string) *Database {
 	}
 	log.Debugln("Connected to database")
 
+	// Create unique zone index
+	_, err = client.Database("cdnv3db").Collection("zones").Indexes().CreateOne(
+		context.Background(),
+		mongo.IndexModel{
+			Keys:    bson.D{{Key: "zone", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Return database pointer
 	return &Database{client.Database("cdnv3db")}
 }
