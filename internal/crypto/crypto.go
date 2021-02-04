@@ -8,14 +8,14 @@ import (
 
 // Key stores all attributes for a DNSSEC signing key
 type Key struct {
-	Base           string // base key filename prefix
-	Key            string // DNSKEY
-	Private        string // private key
-	DSKeyTag       int    // DS key tag
-	DSAlgo         int    // DS algorithm
-	DSDigestType   int    // DS digest type
-	DSDigest       string // DS digest
-	DSRecordString string // full DS record in zone file format
+	Base           string `json:"base"`           // base key filename prefix
+	Key            string `json:"key"`            // DNSKEY
+	Private        string `json:"private"`        // private key
+	DSKeyTag       int    `json:"dskeytag"`       // DS key tag
+	DSAlgo         int    `json:"dsalgo"`         // DS algorithm
+	DSDigestType   int    `json:"dsdigesttype"`   // DS digest type
+	DSDigest       string `json:"dsdigest"`       // DS digest
+	DSRecordString string `json:"dsrecordstring"` // full DS record in zone file format
 }
 
 // NewKey generates a new DNSSEC signing key for a zone
