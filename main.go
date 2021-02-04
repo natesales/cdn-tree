@@ -14,6 +14,7 @@ import (
 	"github.com/natesales/cdnv3/internal/crypto"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
+	"github.com/natesales/cdnv3/internal/util"
 )
 
 var (
@@ -139,10 +140,23 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 // handleAddRecord handles a HTTP POST request to create a new DNS record
 func handleAddRecord(ctx *fiber.Ctx) error {
+	err, user := requireGenericAuth(ctx)
+	if err != nil {
+		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
+	}
+
 	// Get zone to add record to
 	zoneID, err := primitive.ObjectIDFromHex(ctx.Params("zone"))
 	if err != nil {
 		return sendResponse(ctx, 400, errors.New("invalid zone ID"), nil)
+	}
+
+	// Find zone
+	var zone types.Zone
+	result := db.Db.Collection("zones").FindOne(database.NewContext(10*time.Second), &bson.M{"_id": zoneID})
+	err = result.Decode(&zone)
+	if err != nil || !util.Includes(zone.Users, user.ID) { // If error or the zone doesn't contain this user as authorized
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// New record struct
