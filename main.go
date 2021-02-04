@@ -1,7 +1,10 @@
 package main
 
 import (
+	"errors"
 	"github.com/natesales/cdnv3/internal/crypto"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 
@@ -98,6 +101,49 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	return ctx.Status(201).JSON(insertionResult)
 }
 
+// handleAddRecord handles a HTTP POST request to create a new DNS record
+func handleAddRecord(ctx *fiber.Ctx) error {
+	// Get zone to add record to
+	zoneID, err := primitive.ObjectIDFromHex(ctx.Params("zone"))
+	if err != nil {
+		return sendError(ctx, 400, errors.New("invalid zone ID"))
+	}
+
+	// New record struct
+	newRecord := new(types.Record)
+
+	// Parse body into struct
+	if err := ctx.BodyParser(newRecord); err != nil {
+		return sendError(ctx, 400, err)
+	}
+
+	// Validate struct
+	err = validate.Struct(newRecord)
+	if err != nil {
+		return sendError(ctx, 400, err)
+	}
+
+	// Push the new record
+	pushResult, err := db.Db.Collection("zones").UpdateOne(
+		database.NewContext(10*time.Second),
+		bson.M{"_id": zoneID},
+		bson.M{"$push": bson.M{"records": newRecord}},
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key error collection") {
+			return sendError(ctx, 400, err)
+		}
+		return sendError(ctx, 500, err)
+	}
+
+	if pushResult.ModifiedCount < 1 {
+		return sendError(ctx, 400, errors.New("zone with given ID doesn't exist"))
+	}
+
+	log.Printf("Added new record: %v\n", newRecord)
+	return ctx.Status(201).SendString("added")
+}
+
 func main() {
 	log.SetLevel(log.DebugLevel)
 
@@ -108,6 +154,7 @@ func main() {
 	app := fiber.New()
 	app.Post("/nodes/add", handleAddNode)
 	app.Post("/zones/add", handleAddZone)
+	app.Post("/zones/:zone/add", handleAddRecord)
 
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
