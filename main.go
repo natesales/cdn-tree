@@ -21,7 +21,7 @@ var (
 	validate *validator.Validate
 )
 
-// Response helpers
+// Helpers
 
 // sendResponse helps return a JSON response message from a go error type or string
 func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
@@ -173,6 +173,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	// Set user defaults
 	newUser.Enabled = false
 	newUser.Admin = false
+	newUser.APIKey = crypto.RandomString()
 
 	// Insert the new node
 	_, err = db.Db.Collection("users").InsertOne(database.NewContext(10*time.Second), newUser)

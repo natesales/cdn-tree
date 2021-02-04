@@ -3,9 +3,10 @@ package crypto
 import (
 	"crypto/rand"
 	"fmt"
-	"github.com/miekg/dns"
 	"log"
 	"math/big"
+
+	"github.com/miekg/dns"
 )
 
 // DNSSECKey stores all attributes for a DNSSEC signing key
