@@ -53,6 +53,7 @@ func requireGenericAuth(ctx *fiber.Ctx) (error, types.User) {
 	// Find user by API key in the database
 	var user types.User
 	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"apikey": apiKey})
+	// Decode database result into user struct
 	err := result.Decode(&user)
 	if err != nil {
 		return err, types.User{}
@@ -87,6 +88,7 @@ func handleAddNode(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 500, err, nil)
 	}
 
+	// Return 201 Created OK response
 	return sendResponse(ctx, 201, "added new node", nil)
 }
 
@@ -134,6 +136,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 500, err, nil)
 	}
 
+	// Return 201 Created OK response
 	return sendResponse(ctx, 201, "added new zone", nil)
 }
 
@@ -177,6 +180,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, errors.New("zone with given ID doesn't exist"), nil)
 	}
 
+	// Return 201 Created OK response
 	return sendResponse(ctx, 201, "record added", nil)
 }
 
@@ -220,6 +224,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 500, err, nil)
 	}
 
+	// Return 201 Created OK response
 	return sendResponse(ctx, 201, "added new user", nil)
 }
 
@@ -246,7 +251,9 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, err, nil)
 	}
 
+	// Validate the provided hash with the stored one in database
 	if crypto.ValidHash(user.Hash, loginReq.Password) {
+		// If success, return the user's API key
 		return sendResponse(ctx, 201, "user authenticated", map[string]string{"apikey": user.APIKey})
 	} else {
 		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
@@ -258,9 +265,13 @@ func main() {
 
 	db = database.New("mongodb://localhost:27017")
 
+	// Type/data validator
 	validate = validator.New()
 
+	// Fiber API server
 	app := fiber.New()
+
+	// API Routes
 
 	// Node management
 	// TODO: Authenticate these routes
