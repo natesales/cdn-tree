@@ -36,22 +36,22 @@ func handleConnections(ctx *fiber.Ctx) error {
 }
 
 // handleAddNode handles a HTTP POST request to add a new node
-func handleAddNode(c *fiber.Ctx) error {
+func handleAddNode(ctx *fiber.Ctx) error {
 	newNode := new(types.Node)
 
 	// Parse body into struct
-	if err := c.BodyParser(newNode); err != nil {
-		return c.Status(400).SendString(err.Error())
+	if err := ctx.BodyParser(newNode); err != nil {
+		return ctx.Status(400).SendString(err.Error())
 	}
 
 	// Insert the new node
 	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
-		return c.Status(500).SendString(err.Error())
+		return ctx.Status(500).SendString(err.Error())
 	}
 
 	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
-	return c.Status(201).JSON(insertionResult)
+	return ctx.Status(201).JSON(insertionResult)
 }
 
 // handleAddZone handles a HTTP POST request to add a new zone
