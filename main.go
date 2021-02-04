@@ -81,6 +81,10 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	// Create DNSSEC key
 	newZone.DNSSEC = crypto.NewKey(newZone.Zone)
 
+	// Create empty arrays
+	newZone.Users = []string{}
+	newZone.Records = []string{}
+
 	// Insert the new zone
 	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
