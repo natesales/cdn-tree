@@ -27,3 +27,10 @@ type Zone struct {
 	Records []string         `json:"-"`
 	DNSSEC  crypto.DNSSECKey `json:"-"`
 }
+
+// User stores a CDN user
+type User struct {
+	Email   string `json:"email" validate:"required,email"`
+	Enabled bool   `json:"-"`
+	Admin   bool   `json:"-"`
+}
