@@ -45,7 +45,10 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	// Insert the new node
 	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
-		return sendError(ctx, 500, err)
+		if strings.Contains(err.Error(), "duplicate key error collection") {
+			return ctx.Status(400).SendString(err.Error())
+		}
+		return ctx.Status(500).SendString(err.Error())
 	}
 
 	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
@@ -81,6 +84,9 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	// Insert the new zone
 	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key error collection") {
+			return ctx.Status(400).SendString(err.Error())
+		}
 		return ctx.Status(500).SendString(err.Error())
 	}
 
