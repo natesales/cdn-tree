@@ -2,16 +2,16 @@ package main
 
 import (
 	"errors"
-	"github.com/natesales/cdnv3/internal/crypto"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/natesales/cdnv3/internal/crypto"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
 )
