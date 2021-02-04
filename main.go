@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/gofiber/fiber/v2"
 	log "github.com/sirupsen/logrus"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/natesales/cdnv3/internal/database"
@@ -51,7 +53,17 @@ func handleAddZone(ctx *fiber.Ctx) error {
 		return ctx.Status(400).SendString(err.Error())
 	}
 
-	// Insert the new node
+	// Validate zone type
+	matched, err := regexp.Match(`^(((?!-))(xn--|_)?[a-z0-9-]{0,61}[a-z0-9]\.)*(xn--)?([a-z0-9][a-z0-9\-]{0,60}|[a-z0-9-]{1,30}\.[a-z]{2,})$`, []byte(newZone.Zone))
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Cover additional invalid cases
+	if !matched || newZone.Zone == "." || strings.Contains(newZone.Zone, " ") || strings.HasPrefix(newZone.Zone, "-") || strings.HasSuffix(newZone.Zone, "-") {
+		return ctx.Status(400).SendString("Invalid zone")
+	}
+
+	// Insert the new zone
 	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
 		return ctx.Status(500).SendString(err.Error())
