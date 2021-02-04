@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -58,6 +59,11 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	err := validate.Struct(newZone)
 	if err != nil {
 		return ctx.Status(400).SendString(err.Error())
+	}
+
+	// Remove trailing dot if present
+	if strings.HasSuffix(newZone.Zone, ".") {
+		newZone.Zone = newZone.Zone[:len(newZone.Zone)-1]
 	}
 
 	// Set default zone serial
