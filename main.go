@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/natesales/cdnv3/internal/crypto"
 	"strings"
 	"time"
 
@@ -68,6 +69,9 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 	// Set default zone serial
 	newZone.Serial = uint64(time.Now().UnixNano())
+
+	// Create DNSSEC key
+	newZone.DNSSEC = crypto.NewKey(newZone.Zone)
 
 	// Insert the new zone
 	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
