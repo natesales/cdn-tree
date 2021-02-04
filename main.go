@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/natesales/cdnv3/internal/control"
 	"github.com/natesales/cdnv3/internal/crypto"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
@@ -292,6 +293,17 @@ func main() {
 	// Authentication
 	app.Post("/auth/register", handleAddUser)
 	app.Post("/auth/login", handleUserLogin)
+
+	// Debug
+	// TODO: Authenticate these routes
+	app.Get("/debug/manifest", func(ctx *fiber.Ctx) error {
+		err, manifest := control.Manifest(db)
+		if err != nil {
+			return sendResponse(ctx, 500, err, nil)
+		}
+
+		return sendResponse(ctx, 200, "retrieved zone manifest", map[string]interface{}{"zones": manifest})
+	})
 
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
