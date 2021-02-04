@@ -93,7 +93,7 @@ func handleAddNode(ctx *fiber.Ctx) error {
 func handleAddZone(ctx *fiber.Ctx) error {
 	err, user := requireGenericAuth(ctx)
 	if err != nil {
-		return sendResponse(ctx, 400, errors.New("unauthenticated"), nil)
+		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
 	}
 
 	newZone := new(types.Zone)
