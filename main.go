@@ -155,6 +155,37 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	return sendResponse(ctx, 201, "record added")
 }
 
+// handleAddUser handles a HTTP POST request to create a new USER
+func handleAddUser(ctx *fiber.Ctx) error {
+	newUser := new(types.User)
+
+	// Parse body into struct
+	if err := ctx.BodyParser(newUser); err != nil {
+		return sendResponse(ctx, 400, err)
+	}
+
+	// Validate struct
+	err := validate.Struct(newUser)
+	if err != nil {
+		return sendResponse(ctx, 400, err)
+	}
+
+	// Set user defaults
+	newUser.Enabled = false
+	newUser.Admin = false
+
+	// Insert the new node
+	_, err = db.Db.Collection("users").InsertOne(database.NewContext(10*time.Second), newUser)
+	if err != nil {
+		if strings.Contains(err.Error(), "duplicate key error collection") {
+			return sendResponse(ctx, 400, err)
+		}
+		return sendResponse(ctx, 500, err)
+	}
+
+	return sendResponse(ctx, 201, "added new user")
+}
+
 func main() {
 	log.SetLevel(log.DebugLevel)
 
@@ -166,6 +197,9 @@ func main() {
 	app.Post("/nodes/add", handleAddNode)
 	app.Post("/zones/add", handleAddZone)
 	app.Post("/zones/:zone/add", handleAddRecord)
+
+	// Authentication
+	app.Post("/auth/register", handleAddUser)
 
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
