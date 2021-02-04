@@ -13,6 +13,7 @@ type Node struct {
 
 // Record stores a DNS record
 type Record struct {
+	Type  string `json:"type" validate:"required"`
 	Label string `json:"label" validate:"required"`
 	TTL   uint64 `json:"ttl" validate:"required"`
 	Value string `json:"value" validate:"required"`
