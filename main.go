@@ -23,9 +23,22 @@ var (
 
 // Response helpers
 
-// sendError helps return a JSON error message from a go error type
-func sendError(ctx *fiber.Ctx, code int, err error) error {
-	return ctx.Status(code).JSON(map[string]interface{}{"success": false, "message": err.Error()})
+// sendResponse helps return a JSON response message from a go error type or string
+func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
+	var success bool // Did the request succeed?
+	var message string
+
+	// Check if the reason type is an error
+	switch reason.(type) {
+	case error:
+		success = false
+		message = reason.(error).Error()
+	default:
+		success = true
+		message = reason.(string)
+	}
+
+	return ctx.Status(code).JSON(map[string]interface{}{"success": success, "message": message})
 }
 
 // HTTP endpoint handlers
@@ -36,22 +49,22 @@ func handleAddNode(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newNode); err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Validate node struct
 	err := validate.Struct(newNode)
 	if err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Insert the new node
 	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return ctx.Status(400).SendString(err.Error())
+			return sendResponse(ctx, 400, err)
 		}
-		return ctx.Status(500).SendString(err.Error())
+		return sendResponse(ctx, 500, err)
 	}
 
 	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
@@ -64,13 +77,13 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newZone); err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Validate zone struct
 	err := validate.Struct(newZone)
 	if err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Remove trailing dot if present
@@ -92,9 +105,9 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return ctx.Status(400).SendString(err.Error())
+			return sendResponse(ctx, 400, err)
 		}
-		return ctx.Status(500).SendString(err.Error())
+		return sendResponse(ctx, 500, err)
 	}
 
 	log.Printf("Inserted new zone: %s\n", insertionResult.InsertedID)
@@ -106,7 +119,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	// Get zone to add record to
 	zoneID, err := primitive.ObjectIDFromHex(ctx.Params("zone"))
 	if err != nil {
-		return sendError(ctx, 400, errors.New("invalid zone ID"))
+		return sendResponse(ctx, 400, errors.New("invalid zone ID"))
 	}
 
 	// New record struct
@@ -114,13 +127,13 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newRecord); err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Validate struct
 	err = validate.Struct(newRecord)
 	if err != nil {
-		return sendError(ctx, 400, err)
+		return sendResponse(ctx, 400, err)
 	}
 
 	// Push the new record
@@ -131,17 +144,18 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendError(ctx, 400, err)
+			return sendResponse(ctx, 400, err)
 		}
-		return sendError(ctx, 500, err)
+		return sendResponse(ctx, 500, err)
 	}
 
+	// If nothing was modified (and there wasn't a previously caught error) then the zone must not exist
 	if pushResult.ModifiedCount < 1 {
-		return sendError(ctx, 400, errors.New("zone with given ID doesn't exist"))
+		return sendResponse(ctx, 400, errors.New("zone with given ID doesn't exist"))
 	}
 
-	log.Printf("Added new record: %v\n", newRecord)
-	return ctx.Status(201).SendString("added")
+	log.Printf("Added new record: %+v\n", newRecord)
+	return sendResponse(ctx, 201, "record added")
 }
 
 func main() {
