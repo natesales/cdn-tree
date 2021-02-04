@@ -21,9 +21,9 @@ type Record struct {
 // Zone stores a DNS zone
 type Zone struct {
 	ID      string           `json:"id,omitempty" bson:"_id,omitempty"`
-	Zone    string           `json:"zone"`
-	Users   []string         `json:"users"`
-	Serial  uint64           `json:"serial"`
-	Records []string         `json:"records"`
+	Zone    string           `json:"zone" validate:"required,fqdn"`
+	Users   []string         `json:"-"`
+	Serial  uint64           `json:"-"`
+	Records []string         `json:"-"`
 	DNSSEC  crypto.DNSSECKey `json:"-"`
 }
