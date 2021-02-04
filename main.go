@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/natesales/cdnv3/internal/crypto"
 	"strings"
 	"time"
@@ -18,6 +19,13 @@ var (
 	validate *validator.Validate
 )
 
+// Response helpers
+
+// sendError helps return a JSON error message from a go error type
+func sendError(ctx *fiber.Ctx, code int, err error) error {
+	return ctx.Status(code).JSON(map[string]interface{}{"success": false, "message": err.Error()})
+}
+
 // HTTP endpoint handlers
 
 // handleAddNode handles a HTTP POST request to add a new node
@@ -26,21 +34,21 @@ func handleAddNode(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newNode); err != nil {
-		return ctx.Status(400).SendString(err.Error())
+		return sendError(ctx, 400, err)
 	}
 
 	// Validate node struct
 	if newNode.Latitude == 0 || newNode.Longitude == 0 {
-		return ctx.Status(400).SendString("Invalid longitude and/or latitude")
+		return sendError(ctx, 400, errors.New("invalid longitude and/or latitude"))
 	}
 	if newNode.Provider == "" {
-		return ctx.Status(400).SendString("Invalid provider string")
+		return sendError(ctx, 400, errors.New("invalid provider string"))
 	}
 
 	// Insert the new node
 	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
-		return ctx.Status(500).SendString(err.Error())
+		return sendError(ctx, 500, err)
 	}
 
 	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
@@ -53,13 +61,13 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newZone); err != nil {
-		return ctx.Status(400).SendString(err.Error())
+		return sendError(ctx, 400, err)
 	}
 
 	// Validate zone struct
 	err := validate.Struct(newZone)
 	if err != nil {
-		return ctx.Status(400).SendString(err.Error())
+		return sendError(ctx, 400, err)
 	}
 
 	// Remove trailing dot if present
