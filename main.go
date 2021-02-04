@@ -123,7 +123,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 	// Create empty arrays
 	newZone.Users = []string{user.ID}
-	newZone.Records = []string{}
+	newZone.Records = []types.Record{}
 
 	// Insert the new zone
 	_, err = db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
@@ -156,7 +156,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	result := db.Db.Collection("zones").FindOne(database.NewContext(10*time.Second), &bson.M{"_id": zoneID})
 	err = result.Decode(&zone)
 	if err != nil || !util.Includes(zone.Users, user.ID) { // If error or the zone doesn't contain this user as authorized
-		return sendResponse(ctx, 400, err, nil)
+		return sendResponse(ctx, 400, err, "decoding zone")
 	}
 
 	// New record struct
@@ -164,13 +164,13 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newRecord); err != nil {
-		return sendResponse(ctx, 400, err, nil)
+		return sendResponse(ctx, 400, err, "parsing record body")
 	}
 
 	// Validate struct
 	err = validate.Struct(newRecord)
 	if err != nil {
-		return sendResponse(ctx, 400, err, nil)
+		return sendResponse(ctx, 400, err, "validating record body")
 	}
 
 	// Push the new record
@@ -180,7 +180,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		bson.M{"$push": bson.M{"records": newRecord}},
 	)
 	if err != nil {
-		return sendResponse(ctx, 400, err, nil)
+		return sendResponse(ctx, 400, err, "pushing new record")
 	}
 
 	// If nothing was modified (and there wasn't a previously caught error) then the zone must not exist

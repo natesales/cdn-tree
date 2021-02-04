@@ -25,7 +25,7 @@ type Zone struct {
 	Zone    string           `json:"zone" validate:"required,fqdn"`
 	Users   []string         `json:"-"`
 	Serial  uint64           `json:"-"`
-	Records []string         `json:"-"`
+	Records []Record         `json:"-"`
 	DNSSEC  crypto.DNSSECKey `json:"-"`
 }
 
