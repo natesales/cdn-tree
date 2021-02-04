@@ -5,10 +5,10 @@ import "github.com/natesales/cdnv3/internal/crypto"
 // Node stores a single edge node
 type Node struct {
 	ID         string  `json:"id,omitempty" bson:"_id,omitempty"`
-	Provider   string  `json:"provider"`
-	Latitude   float32 `json:"latitude"`
-	Longitude  float32 `json:"longitude"`
-	Authorized bool    `json:"authorized"`
+	Provider   string  `json:"provider" validate:"required"`
+	Latitude   float32 `json:"latitude" validate:"required"`
+	Longitude  float32 `json:"longitude" validate:"required"`
+	Authorized bool    `json:"-"`
 }
 
 // Record stores a DNS record

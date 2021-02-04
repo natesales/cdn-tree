@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"github.com/natesales/cdnv3/internal/crypto"
 	"strings"
 	"time"
@@ -38,11 +37,9 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	}
 
 	// Validate node struct
-	if newNode.Latitude == 0 || newNode.Longitude == 0 {
-		return sendError(ctx, 400, errors.New("invalid longitude and/or latitude"))
-	}
-	if newNode.Provider == "" {
-		return sendError(ctx, 400, errors.New("invalid provider string"))
+	err := validate.Struct(newNode)
+	if err != nil {
+		return sendError(ctx, 400, err)
 	}
 
 	// Insert the new node
