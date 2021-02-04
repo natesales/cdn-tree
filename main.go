@@ -247,7 +247,7 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 	}
 
 	if crypto.ValidHash(user.Hash, loginReq.Password) {
-		return sendResponse(ctx, 201, "user authenticated", nil)
+		return sendResponse(ctx, 201, "user authenticated", map[string]string{"apikey": user.APIKey})
 	} else {
 		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
 	}
