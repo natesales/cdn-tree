@@ -59,7 +59,7 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	}
 
 	// Insert the new node
-	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
+	_, err = db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
 			return sendResponse(ctx, 400, err)
@@ -101,7 +101,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	newZone.Records = []string{}
 
 	// Insert the new zone
-	insertionResult, err := db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
+	_, err = db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
 			return sendResponse(ctx, 400, err)
