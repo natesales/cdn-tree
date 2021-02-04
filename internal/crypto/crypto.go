@@ -2,11 +2,13 @@ package crypto
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"fmt"
 	"log"
 	"math/big"
 
 	"github.com/miekg/dns"
+	"golang.org/x/crypto/argon2"
 )
 
 // DNSSECKey stores all attributes for a DNSSEC signing key
@@ -61,4 +63,31 @@ func RandomString() string {
 	}
 
 	return string(ret)
+}
+
+// argon2IDKey computes an argon2 hash by given input and salt
+func argon2IDKey(input []byte, salt []byte) []byte {
+	return argon2.IDKey(input, salt, 1, 64*1024, 4, 32)
+}
+
+// PasswordHash hashes a plaintext string and returns an argon2 hash byte slice
+func PasswordHash(plaintext string) ([]byte, error) {
+	// Generate a random 16-byte salt
+	salt := make([]byte, 16)
+	if _, err := rand.Read(salt); err != nil {
+		return make([]byte, 0), err
+	}
+
+	hash := argon2IDKey([]byte(plaintext), salt)
+
+	return append(salt, hash...), nil
+}
+
+// ValidHash validates a hash and provided plaintext password
+func ValidHash(payload []byte, plaintext string) bool {
+	salt := payload[:16]
+	hash := payload[16:]
+
+	providedHash := argon2IDKey([]byte(plaintext), salt)
+	return subtle.ConstantTimeCompare(hash, providedHash) == 1
 }

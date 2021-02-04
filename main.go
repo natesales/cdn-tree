@@ -11,7 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/natesales/cdnv3/internal/authentication"
 	"github.com/natesales/cdnv3/internal/crypto"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
@@ -185,7 +184,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	newUser.APIKey = crypto.RandomString()
 
 	// Compute the user's password hash
-	newUser.Hash, err = authentication.GetPasswordHash(newUser.Password)
+	newUser.Hash, err = crypto.PasswordHash(newUser.Password)
 	if err != nil {
 		return sendResponse(ctx, 500, err)
 	}
@@ -228,7 +227,7 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, err)
 	}
 
-	if authentication.ValidHash(user.Hash, loginReq.Password) {
+	if crypto.ValidHash(user.Hash, loginReq.Password) {
 		return sendResponse(ctx, 201, "user authenticated")
 	} else {
 		return sendResponse(ctx, 403, errors.New("unauthorized"))
