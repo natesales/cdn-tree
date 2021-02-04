@@ -24,9 +24,9 @@ var (
 // Helpers
 
 // sendResponse helps return a JSON response message from a go error type or string
-func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
-	var success bool // Did the request succeed?
-	var message string
+func sendResponse(ctx *fiber.Ctx, code int, reason interface{}, data interface{}) error {
+	var success bool   // Did the request succeed?
+	var message string // What did the request do?
 
 	// Check if the reason type is an error
 	switch reason.(type) {
@@ -38,7 +38,11 @@ func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
 		message = reason.(string)
 	}
 
-	return ctx.Status(code).JSON(map[string]interface{}{"success": success, "message": message})
+	return ctx.Status(code).JSON(map[string]interface{}{
+		"success": success,
+		"message": message,
+		"data":    data,
+	})
 }
 
 // requireGenericAuth checks if a user is authenticated and is present in the database
@@ -65,45 +69,45 @@ func handleAddNode(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newNode); err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Validate node struct
 	err := validate.Struct(newNode)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Insert the new node
 	_, err = db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err)
+			return sendResponse(ctx, 400, err, nil)
 		}
-		return sendResponse(ctx, 500, err)
+		return sendResponse(ctx, 500, err, nil)
 	}
 
-	return sendResponse(ctx, 201, "added new node")
+	return sendResponse(ctx, 201, "added new node", nil)
 }
 
 // handleAddZone handles a HTTP POST request to add a new zone
 func handleAddZone(ctx *fiber.Ctx) error {
 	err, user := requireGenericAuth(ctx)
 	if err != nil {
-		return sendResponse(ctx, 400, errors.New("unauthenticated"))
+		return sendResponse(ctx, 400, errors.New("unauthenticated"), nil)
 	}
 
 	newZone := new(types.Zone)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newZone); err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Validate zone struct
 	err = validate.Struct(newZone)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Remove trailing dot if present
@@ -125,12 +129,12 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	_, err = db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err)
+			return sendResponse(ctx, 400, err, nil)
 		}
-		return sendResponse(ctx, 500, err)
+		return sendResponse(ctx, 500, err, nil)
 	}
 
-	return sendResponse(ctx, 201, "added new zone")
+	return sendResponse(ctx, 201, "added new zone", nil)
 }
 
 // handleAddRecord handles a HTTP POST request to create a new DNS record
@@ -138,7 +142,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	// Get zone to add record to
 	zoneID, err := primitive.ObjectIDFromHex(ctx.Params("zone"))
 	if err != nil {
-		return sendResponse(ctx, 400, errors.New("invalid zone ID"))
+		return sendResponse(ctx, 400, errors.New("invalid zone ID"), nil)
 	}
 
 	// New record struct
@@ -146,13 +150,13 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newRecord); err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Validate struct
 	err = validate.Struct(newRecord)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Push the new record
@@ -163,17 +167,17 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err)
+			return sendResponse(ctx, 400, err, nil)
 		}
-		return sendResponse(ctx, 500, err)
+		return sendResponse(ctx, 500, err, nil)
 	}
 
 	// If nothing was modified (and there wasn't a previously caught error) then the zone must not exist
 	if pushResult.ModifiedCount < 1 {
-		return sendResponse(ctx, 400, errors.New("zone with given ID doesn't exist"))
+		return sendResponse(ctx, 400, errors.New("zone with given ID doesn't exist"), nil)
 	}
 
-	return sendResponse(ctx, 201, "record added")
+	return sendResponse(ctx, 201, "record added", nil)
 }
 
 // handleAddUser handles a HTTP POST request to create a new USER
@@ -182,13 +186,13 @@ func handleAddUser(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newUser); err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Validate struct
 	err := validate.Struct(newUser)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Set user defaults
@@ -201,7 +205,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	// Compute the user's password hash
 	newUser.Hash, err = crypto.PasswordHash(newUser.Password)
 	if err != nil {
-		return sendResponse(ctx, 500, err)
+		return sendResponse(ctx, 500, err, nil)
 	}
 
 	// Zero out the plaintext password
@@ -211,12 +215,12 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	_, err = db.Db.Collection("users").InsertOne(database.NewContext(10*time.Second), newUser)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err)
+			return sendResponse(ctx, 400, err, nil)
 		}
-		return sendResponse(ctx, 500, err)
+		return sendResponse(ctx, 500, err, nil)
 	}
 
-	return sendResponse(ctx, 201, "added new user")
+	return sendResponse(ctx, 201, "added new user", nil)
 }
 
 // handleUserLogin handles a HTTP POST request to authenticate a user
@@ -225,13 +229,13 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 
 	// Parse body into struct
 	if err := ctx.BodyParser(loginReq); err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Validate node struct
 	err := validate.Struct(loginReq)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// Find user by email
@@ -239,13 +243,13 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"email": loginReq.Email})
 	err = result.Decode(&user)
 	if err != nil {
-		return sendResponse(ctx, 400, err)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	if crypto.ValidHash(user.Hash, loginReq.Password) {
-		return sendResponse(ctx, 201, "user authenticated")
+		return sendResponse(ctx, 201, "user authenticated", nil)
 	} else {
-		return sendResponse(ctx, 403, errors.New("unauthorized"))
+		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
 	}
 }
 
@@ -257,7 +261,12 @@ func main() {
 	validate = validator.New()
 
 	app := fiber.New()
+
+	// Node management
+	// TODO: Authenticate these routes
 	app.Post("/nodes/add", handleAddNode)
+
+	// DNS management
 	app.Post("/zones/add", handleAddZone)
 	app.Post("/zones/:zone/add", handleAddRecord)
 
