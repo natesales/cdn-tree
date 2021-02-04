@@ -82,9 +82,6 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	// Insert the new node
 	_, err = db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err, nil)
-		}
 		return sendResponse(ctx, 500, err, nil)
 	}
 
@@ -169,10 +166,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		bson.M{"$push": bson.M{"records": newRecord}},
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key error collection") {
-			return sendResponse(ctx, 400, err, nil)
-		}
-		return sendResponse(ctx, 500, err, nil)
+		return sendResponse(ctx, 400, err, nil)
 	}
 
 	// If nothing was modified (and there wasn't a previously caught error) then the zone must not exist
