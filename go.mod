@@ -8,4 +8,5 @@ require (
 	github.com/miekg/dns v1.1.38
 	github.com/sirupsen/logrus v1.7.0
 	go.mongodb.org/mongo-driver v1.4.6
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )

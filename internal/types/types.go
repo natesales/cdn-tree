@@ -30,8 +30,16 @@ type Zone struct {
 
 // User stores a CDN user
 type User struct {
-	Email   string `json:"email" validate:"required,email"`
-	APIKey  string `json:"-"`
-	Enabled bool   `json:"-"`
-	Admin   bool   `json:"-"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+	APIKey   string `json:"-"`
+	Enabled  bool   `json:"-"`
+	Admin    bool   `json:"-"`
+	Hash     []byte `json:"-"`
+}
+
+// LoginRequest stores a username/password combination
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }

@@ -11,6 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/natesales/cdnv3/internal/authentication"
 	"github.com/natesales/cdnv3/internal/crypto"
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
@@ -40,6 +41,12 @@ func sendResponse(ctx *fiber.Ctx, code int, reason interface{}) error {
 
 	return ctx.Status(code).JSON(map[string]interface{}{"success": success, "message": message})
 }
+
+//// requireGenericAuth checks if a user is authenticated and is present in the database
+//func requireGenericAuth(ctx *fiber.Ctx) {
+//	apiKey := string(ctx.Request().Header.Peek("Authorization"))
+//	log.Println(apiKey)
+//}
 
 // HTTP endpoint handlers
 
@@ -173,7 +180,18 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	// Set user defaults
 	newUser.Enabled = false
 	newUser.Admin = false
+
+	// Generate a random API key
 	newUser.APIKey = crypto.RandomString()
+
+	// Compute the user's password hash
+	newUser.Hash, err = authentication.GetPasswordHash(newUser.Password)
+	if err != nil {
+		return sendResponse(ctx, 500, err)
+	}
+
+	// Zero out the plaintext password
+	newUser.Password = ""
 
 	// Insert the new node
 	_, err = db.Db.Collection("users").InsertOne(database.NewContext(10*time.Second), newUser)
@@ -185,6 +203,36 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	}
 
 	return sendResponse(ctx, 201, "added new user")
+}
+
+// handleUserLogin handles a HTTP POST request to authenticate a user
+func handleUserLogin(ctx *fiber.Ctx) error {
+	loginReq := new(types.LoginRequest)
+
+	// Parse body into struct
+	if err := ctx.BodyParser(loginReq); err != nil {
+		return sendResponse(ctx, 400, err)
+	}
+
+	// Validate node struct
+	err := validate.Struct(loginReq)
+	if err != nil {
+		return sendResponse(ctx, 400, err)
+	}
+
+	// Find user by email
+	var user types.User
+	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"email": loginReq.Email})
+	err = result.Decode(&user)
+	if err != nil {
+		return sendResponse(ctx, 400, err)
+	}
+
+	if authentication.ValidHash(user.Hash, loginReq.Password) {
+		return sendResponse(ctx, 201, "user authenticated")
+	} else {
+		return sendResponse(ctx, 403, errors.New("unauthorized"))
+	}
 }
 
 func main() {
@@ -201,6 +249,7 @@ func main() {
 
 	// Authentication
 	app.Post("/auth/register", handleAddUser)
+	app.Post("/auth/login", handleUserLogin)
 
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
