@@ -4,7 +4,7 @@ import "github.com/natesales/cdnv3/internal/crypto"
 
 // Node stores a single edge node
 type Node struct {
-	ID         string  `json:"id,omitempty" bson:"_id,omitempty"`
+	ID         string  `json:"-" bson:"_id,omitempty"`
 	Provider   string  `json:"provider" validate:"required"`
 	Latitude   float32 `json:"latitude" validate:"required"`
 	Longitude  float32 `json:"longitude" validate:"required"`
@@ -20,7 +20,7 @@ type Record struct {
 
 // Zone stores a DNS zone
 type Zone struct {
-	ID      string           `json:"id,omitempty" bson:"_id,omitempty"`
+	ID      string           `json:"-" bson:"_id,omitempty"`
 	Zone    string           `json:"zone" validate:"required,fqdn"`
 	Users   []string         `json:"-"`
 	Serial  uint64           `json:"-"`
