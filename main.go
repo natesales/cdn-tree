@@ -44,6 +44,14 @@ func handleAddNode(ctx *fiber.Ctx) error {
 		return ctx.Status(400).SendString(err.Error())
 	}
 
+	// Validate node struct
+	if newNode.Latitude == 0 || newNode.Longitude == 0 {
+		return ctx.Status(400).SendString("Invalid longitude and/or latitude")
+	}
+	if newNode.Provider == "" {
+		return ctx.Status(400).SendString("Invalid provider string")
+	}
+
 	// Insert the new node
 	insertionResult, err := db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
 	if err != nil {
