@@ -1,9 +1,11 @@
 package crypto
 
 import (
+	"crypto/rand"
 	"fmt"
 	"github.com/miekg/dns"
 	"log"
+	"math/big"
 )
 
 // DNSSECKey stores all attributes for a DNSSEC signing key
@@ -42,4 +44,20 @@ func NewKey(zone string) DNSSECKey {
 		DSDigest:       ds.Digest,
 		DSRecordString: ds.String(),
 	}
+}
+
+// RandomString returns a securely generated random string
+func RandomString() string {
+	length := 48
+	const letters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+	ret := make([]byte, length)
+	for i := 0; i < length; i++ {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(letters))))
+		if err != nil {
+			log.Fatalf("system RNG error: %v\n", err)
+		}
+		ret[i] = letters[num.Int64()]
+	}
+
+	return string(ret)
 }
