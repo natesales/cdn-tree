@@ -67,8 +67,7 @@ func handleAddNode(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 500, err)
 	}
 
-	log.Printf("Inserted new node: %s\n", insertionResult.InsertedID)
-	return ctx.Status(201).JSON(insertionResult)
+	return sendResponse(ctx, 201, "added new node")
 }
 
 // handleAddZone handles a HTTP POST request to add a new zone
@@ -110,8 +109,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 500, err)
 	}
 
-	log.Printf("Inserted new zone: %s\n", insertionResult.InsertedID)
-	return ctx.Status(201).JSON(insertionResult)
+	return sendResponse(ctx, 201, "added new zone")
 }
 
 // handleAddRecord handles a HTTP POST request to create a new DNS record
@@ -154,7 +152,6 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, errors.New("zone with given ID doesn't exist"))
 	}
 
-	log.Printf("Added new record: %+v\n", newRecord)
 	return sendResponse(ctx, 201, "record added")
 }
 
