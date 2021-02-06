@@ -180,11 +180,8 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, err, "validating record body")
 	}
 
-	log.Debug("Running check")
-
 	// Check for RR header zone exclusion
 	if recordRr.Header().Name != zone.Zone {
-		log.Debug("returning err")
 		return sendResponse(ctx, 400, errors.New("RR name outside of zone"), nil)
 	}
 
