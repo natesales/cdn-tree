@@ -124,7 +124,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 
 	// Create empty arrays
 	newZone.Users = []string{user.ID}
-	newZone.Records = []types.Record{}
+	newZone.Records = []string{}
 
 	// Insert the new zone
 	_, err = db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
@@ -174,11 +174,25 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 400, err, "validating record body")
 	}
 
+	// Parse RRString as a dns.RR type
+	recordRr, err := dns.NewRR(newRecord.RRString)
+	if err != nil { // Invalid RR string
+		return sendResponse(ctx, 400, err, "validating record body")
+	}
+
+	log.Debug("Running check")
+
+	// Check for RR header zone exclusion
+	if recordRr.Header().Name != zone.Zone {
+		log.Debug("returning err")
+		return sendResponse(ctx, 400, errors.New("RR name outside of zone"), nil)
+	}
+
 	// Push the new record
 	pushResult, err := db.Db.Collection("zones").UpdateOne(
 		database.NewContext(10*time.Second),
 		bson.M{"_id": zoneID},
-		bson.M{"$push": bson.M{"records": newRecord}},
+		bson.M{"$push": bson.M{"records": recordRr.String()}},
 	)
 	if err != nil {
 		return sendResponse(ctx, 400, err, "pushing new record")

@@ -1,6 +1,8 @@
 package types
 
-import "github.com/natesales/cdnv3/internal/crypto"
+import (
+	"github.com/natesales/cdnv3/internal/crypto"
+)
 
 // Node stores a single edge node
 type Node struct {
@@ -12,12 +14,9 @@ type Node struct {
 	Authorized bool    `json:"-"`
 }
 
-// Record stores a DNS record
+// Record stores a DNS RR string
 type Record struct {
-	Type  string `json:"type" validate:"required"`
-	Label string `json:"label" validate:"required"`
-	TTL   uint64 `json:"ttl" validate:"required"`
-	Value string `json:"value" validate:"required"`
+	RRString string `json:"rr" validate:"required"`
 }
 
 // Zone stores a DNS zone
@@ -26,7 +25,7 @@ type Zone struct {
 	Zone    string           `json:"zone" validate:"required,fqdn"`
 	Users   []string         `json:"-"`
 	Serial  uint64           `json:"-"`
-	Records []Record         `json:"-"`
+	Records []string         `json:"-"`
 	DNSSEC  crypto.DNSSECKey `json:"-"`
 }
 
