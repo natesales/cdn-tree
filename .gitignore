@@ -2,5 +2,4 @@
 cbootstrap/controlplane*
 cbootstrap/hosts.yml
 cbootstrap/*.retry
-pkg/crypto/crypto
-cdnv3
+dist/

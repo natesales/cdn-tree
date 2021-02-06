@@ -15,9 +15,10 @@ type Config struct {
 }
 
 var (
-	config     Config
-	listenAddr = flag.String("l", ":8001", "Listen address:port to bind to")
-	configFile = flag.String("c", "/opt/packetframe-eca.json", "JSON config file")
+	config            Config
+	listenAddr        = flag.String("l", ":8001", "Listen address:port to bind to")
+	configFile        = flag.String("c", "/opt/packetframe-eca.json", "JSON config file")
+	manifestDirectory = "/opt/packetframe-eca/zones/"
 )
 
 // loadConfig reads the configuration file and returns a Config struct
@@ -36,9 +37,30 @@ func loadConfig() Config {
 	return config
 }
 
+//// localManifest returns a manifest of the locally installed zone files
+//func localManifest() {
+//	zoneFiles, _ := ioutil.ReadDir(manifestDirectory)
+//	for _, item := range zoneFiles {
+//		fmt.Println(item.Name())
+//	}
+//}
+
 // handleMeta handles a HTTP GET request for node metadata
 func handleMeta(w http.ResponseWriter, r *http.Request) {
 	jsonData, err := json.Marshal(config)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
+}
+
+// handleUpdate handles a HTTP POST request to submit a controller zone manifest
+func handleUpdate(w http.ResponseWriter, r *http.Request) {
+	var body interface{}
+	jsonData, err := json.Marshal(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
