@@ -320,6 +320,11 @@ func main() {
 		return sendResponse(ctx, 200, "retrieved zone manifest", map[string]interface{}{"zones": manifest})
 	})
 
+	app.Get("/debug/update", func(ctx *fiber.Ctx) error {
+		control.Update(db)
+		return sendResponse(ctx, 200, "sent update", nil)
+	})
+
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":3000"))
 }
