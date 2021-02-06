@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/miekg/dns"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,6 +17,7 @@ import (
 	"github.com/natesales/cdnv3/internal/database"
 	"github.com/natesales/cdnv3/internal/types"
 	"github.com/natesales/cdnv3/internal/util"
+	"github.com/natesales/cdnv3/internal/validation"
 )
 
 var (
@@ -112,9 +114,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	}
 
 	// Remove trailing dot if present
-	if strings.HasSuffix(newZone.Zone, ".") {
-		newZone.Zone = newZone.Zone[:len(newZone.Zone)-1]
-	}
+	newZone.Zone = dns.Fqdn(newZone.Zone)
 
 	// Set default zone serial
 	newZone.Serial = uint64(time.Now().UnixNano())
@@ -276,6 +276,10 @@ func main() {
 
 	// Type/data validator
 	validate = validator.New()
+	err := validation.Register(validate)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Fiber API server
 	app := fiber.New()
