@@ -1,7 +1,7 @@
 package types
 
 import (
-	"natesales.net/packetframe/cdn-v3/internal/crypto"
+	"github.com/natesales/cdn-tree/internal/crypto"
 )
 
 // Node stores a single edge node

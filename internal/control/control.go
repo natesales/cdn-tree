@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"natesales.net/packetframe/cdn-v3/internal/database"
-	"natesales.net/packetframe/cdn-v3/internal/types"
+	"github.com/natesales/cdn-tree/internal/database"
+	"github.com/natesales/cdn-tree/internal/types"
 )
 
 // Manifest gets a list of zone:serial pairs
