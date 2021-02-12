@@ -6,3 +6,9 @@ provisioning/vars.yml
 eca/debian/
 eca/packetframe-eca.deb
 backend/exporter/exporter
+
+# Control plane v3
+v3/cbootstrap/controlplane*
+v3/cbootstrap/hosts.yml
+v3/cbootstrap/*.retry
+v3/dist/
