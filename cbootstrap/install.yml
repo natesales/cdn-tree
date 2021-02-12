@@ -1,0 +1,130 @@
+- name: Install
+  hosts: controlplane
+  tasks:
+    - name: Set hosts file
+      template:
+        src: hosts
+        dest: /etc/hosts
+
+    - name: Configure sshd
+      template:
+        src: sshd_config
+        dest: /etc/ssh/sshd_config
+
+    - name: Set hostname
+      copy:
+        content: "{{ inventory_hostname }}.control.packetframe.com"
+        dest: /etc/hostname
+
+    - name: Add WireGuard repo
+      apt_repository:
+        repo: deb http://deb.debian.org/debian buster-backports main contrib non-free
+        state: present
+
+    - name: Add MongoDB apt key
+      apt_key:
+        url: https://www.mongodb.org/static/pgp/server-4.4.asc
+        state: present
+
+    - name: Add MongoDB repo
+      apt_repository:
+        repo: deb http://repo.mongodb.org/apt/debian buster/mongodb-org/4.4 main
+        state: present
+
+    - name: Add caddy apt key
+      apt_key:
+        url: https://dl.cloudsmith.io/public/caddy/stable/cfg/gpg/gpg.155B6D79CA56EA34.key
+        state: present
+
+    - name: Add caddy repo
+      apt_repository:
+        repo: deb https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+        state: present
+
+    - name: Install system packages
+      apt:
+        update_cache: yes
+        pkg:
+          - wireguard
+          - iptables-persistent
+          - mongodb-org
+          - git
+          - python3
+          - python3-pip
+          - cargo
+          - caddy
+
+    - name: Configure WireGuard interfaces
+      template:
+        src: wg-peer
+        dest: "/etc/wireguard/wg0.conf"
+      register: wg_config
+
+    - name: Enable WireGuard startup
+      systemd:
+        name: wg-quick@wg0
+        enabled: true
+        state: restarted
+      when: wg_config.changed
+
+    - name: Save iptables rules
+      template:
+        src: iptables
+        dest: "/etc/iptables/rules.v4"
+      register: iptables
+
+    - name: Apply iptables rules
+      shell: "iptables-restore < /etc/iptables/rules.v4"
+      when: iptables.changed
+
+    - name: Save ip6tables rules
+      template:
+        src: ip6tables
+        dest: "/etc/iptables/rules.v6"
+      register: ip6tables
+
+    - name: Apply ip6tables rules
+      shell: "ip6tables-restore < /etc/iptables/rules.v6"
+      when: ip6tables.changed
+
+    - name: Copy MongoDB config
+      template:
+        src: mongod
+        dest: /etc/mongod.conf
+      register: mongo_config
+
+    - name: Apply MongoDB config
+      systemd:
+        name: mongod
+        state: restarted
+        enabled: true
+      when: mongo_config.changed
+
+    - name: Copy Caddyfile
+      template:
+        src: Caddyfile
+        dest: /etc/caddy/Caddyfile
+      register: caddy_config
+
+    - name: Apply Caddy config
+      shell: caddy reload -config /etc/caddy/Caddyfile
+      when: caddy_config.changed
+
+    - name: Clone cdnv3 repo
+      git:
+        repo: https://github.com/natesales/cdnv3
+        dest: /root/cdnv3/
+
+    - name: Configure API service
+      template:
+        src: api-service
+        dest: /lib/systemd/system/cdnv3.service
+      register: cdnv3_service
+
+    - name: Enable and start API service
+      systemd:
+        daemon_reload: true
+        name: cdnv3
+        enabled: true
+        state: restarted
+      when: cdnv3_service.changed
