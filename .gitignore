@@ -1,11 +1,10 @@
 .idea/
-ssh-key*
-provisioning/hosts.yml
-provisioning/*.retry
-provisioning/vars.yml
-eca/debian/
-eca/packetframe-eca.deb
-backend/exporter/exporter
+legacy/provisioning/hosts.yml
+legacy/provisioning/*.retry
+legacy/provisioning/vars.yml
+legacy/eca/debian/
+legacy/eca/packetframe-eca.deb
+legacy/backend/exporter/exporter
 
 # Control plane v3
 v3/cbootstrap/controlplane*
