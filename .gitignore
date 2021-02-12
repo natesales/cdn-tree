@@ -1,13 +1,16 @@
+# Vendor
 .idea/
+
+# Control plane v3
+cbootstrap/controlplane*
+cbootstrap/hosts.yml
+cbootstrap/*.retry
+dist/
+
+# Legacy
 legacy/provisioning/hosts.yml
 legacy/provisioning/*.retry
 legacy/provisioning/vars.yml
 legacy/eca/debian/
 legacy/eca/packetframe-eca.deb
 legacy/backend/exporter/exporter
-
-# Control plane v3
-v3/cbootstrap/controlplane*
-v3/cbootstrap/hosts.yml
-v3/cbootstrap/*.retry
-v3/dist/
