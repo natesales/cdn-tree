@@ -1,4 +1,4 @@
-module github.com/natesales/cdnv3
+module natesales.net/packetframe/cdn-v3
 
 go 1.15
 

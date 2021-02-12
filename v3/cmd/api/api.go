@@ -12,12 +12,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/natesales/cdnv3/internal/control"
-	"github.com/natesales/cdnv3/internal/crypto"
-	"github.com/natesales/cdnv3/internal/database"
-	"github.com/natesales/cdnv3/internal/types"
-	"github.com/natesales/cdnv3/internal/util"
-	"github.com/natesales/cdnv3/internal/validation"
+	"natesales.net/packetframe/cdn-v3/internal/control"
+	"natesales.net/packetframe/cdn-v3/internal/crypto"
+	"natesales.net/packetframe/cdn-v3/internal/database"
+	"natesales.net/packetframe/cdn-v3/internal/types"
+	"natesales.net/packetframe/cdn-v3/internal/util"
+	"natesales.net/packetframe/cdn-v3/internal/validation"
 )
 
 var (
