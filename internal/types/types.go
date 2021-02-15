@@ -45,3 +45,9 @@ type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
 }
+
+// BgpSession stores a BGP session
+type BgpSession struct {
+	Address string `json:"address" validate:"required"`
+	Asn     uint32 `json:"asn" validate:"required"`
+}
