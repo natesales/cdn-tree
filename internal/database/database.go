@@ -10,14 +10,10 @@ import (
 	"time"
 )
 
-// Types
-
-// Database wraps a cdnv3 database
+// Database wraps a mongo.Database
 type Database struct {
 	Db *mongo.Database
 }
-
-// Functions
 
 // NewContext returns a context with given duration
 func NewContext(duration time.Duration) context.Context {
