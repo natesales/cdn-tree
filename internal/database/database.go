@@ -17,6 +17,7 @@ type Database struct {
 
 // NewContext returns a context with given duration
 func NewContext(duration time.Duration) context.Context {
+	// TODO: Remove this function and defer the cancel function
 	ctx, _ := context.WithTimeout(context.Background(), duration)
 	return ctx
 }
@@ -38,7 +39,10 @@ func New(url string) *Database {
 	log.Debugln("Connected to database")
 
 	// Create unique zone indices
-	for collection, key := range map[string]string{"zones": "zone", "users": "user"} {
+	for collection, key := range map[string]string{
+		"zones": "zone",
+		"users": "user",
+	} {
 		_, err = client.Database("cdnv3db").Collection(collection).Indexes().CreateOne(
 			context.Background(),
 			mongo.IndexModel{
