@@ -87,7 +87,7 @@ func (d Daemon) Announce(prefix net.IPNet, nexthop net.IPAddr) error {
 
 // TODO: write Withdraw function
 
-// New creates a new Daemon
+// New constructs a new Daemon
 func New(asn uint32, routerId string) *Daemon {
 	s := gobgp.NewBgpServer()
 	//go s.Serve()
