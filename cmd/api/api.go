@@ -93,6 +93,53 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	return sendResponse(ctx, 201, "added new node", nil)
 }
 
+// handleAddBgpSession handles a HTTP POST request to add a new BGP session to a node
+func handleAddBgpSession(ctx *fiber.Ctx) error {
+	// TODO: Better admin auth
+	err, user := requireGenericAuth(ctx)
+	if err != nil || user.Admin == false {
+		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
+	}
+
+	// Get node ID
+	nodeId, err := primitive.ObjectIDFromHex(ctx.Params("node"))
+	if err != nil {
+		return sendResponse(ctx, 400, errors.New("invalid node ID"), nil)
+	}
+
+	// New session struct
+	newSession := new(types.BgpSession)
+
+	// Parse body into struct
+	if err := ctx.BodyParser(newSession); err != nil {
+		return sendResponse(ctx, 400, err, "parsing record body")
+	}
+
+	// Validate struct
+	err = validate.Struct(newSession)
+	if err != nil {
+		return sendResponse(ctx, 400, err, "validating record body")
+	}
+
+	// Push the new record
+	pushResult, err := db.Db.Collection("nodes").UpdateOne(
+		database.NewContext(10*time.Second),
+		bson.M{"_id": nodeId},
+		bson.M{"$push": bson.M{"sessions": newSession}},
+	)
+	if err != nil {
+		return sendResponse(ctx, 400, err, "pushing new record")
+	}
+
+	// If nothing was modified (and there wasn't a previously caught error) then the node must not exist. TODO: Is this really true?
+	if pushResult.ModifiedCount < 1 {
+		return sendResponse(ctx, 400, errors.New("node with given ID doesn't exist"), nil)
+	}
+
+	// Return 201 Created OK response
+	return sendResponse(ctx, 201, "session added", nil)
+}
+
 // handleAddZone handles a HTTP POST request to add a new zone
 func handleAddZone(ctx *fiber.Ctx) error {
 	err, user := requireGenericAuth(ctx)
@@ -283,6 +330,7 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 func main() {
 	log.SetLevel(log.DebugLevel)
 
+	// TODO: Replica set
 	db = database.New("mongodb://localhost:27017")
 
 	// Type/data validator
@@ -300,6 +348,7 @@ func main() {
 	// Node management
 	// TODO: Authenticate these routes
 	app.Post("/nodes/add", handleAddNode)
+	app.Post("/nodes/:node/new_session", handleAddBgpSession)
 
 	// DNS management
 	app.Post("/zones/add", handleAddZone)
