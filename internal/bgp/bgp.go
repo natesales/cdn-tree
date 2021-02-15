@@ -10,15 +10,18 @@ import (
 	"net"
 )
 
+// Daemon wraps a gobgp.BgpServer
 type Daemon struct {
 	BgpServer *gobgp.BgpServer
 }
 
+// Config stores a router's local configuration
 type Config struct {
 	Asn      uint32
 	RouterId string
 }
 
+// NewPeer creates a new BGP session
 func (d *Daemon) NewPeer(address string, asn uint32) error {
 	return d.BgpServer.AddPeer(context.Background(), &api.AddPeerRequest{
 		Peer: &api.Peer{
@@ -30,7 +33,8 @@ func (d *Daemon) NewPeer(address string, asn uint32) error {
 	})
 }
 
-func (d Daemon) NewRoute(prefix net.IPNet, nexthop net.IPAddr) error {
+// Announce announces a route
+func (d Daemon) Announce(prefix net.IPNet, nexthop net.IPAddr) error {
 	// Determine prefix address family and set AFI (SAFI is always UNICAST)
 	var afi api.Family_Afi
 	if prefix.IP.To4() == nil { // If IPv6
@@ -81,7 +85,10 @@ func (d Daemon) NewRoute(prefix net.IPNet, nexthop net.IPAddr) error {
 	return err
 }
 
-func Setup(asn uint32, routerId string) *Daemon {
+// TODO: write Withdraw function
+
+// New creates a new Daemon
+func New(asn uint32, routerId string) *Daemon {
 	s := gobgp.NewBgpServer()
 	//go s.Serve()
 
