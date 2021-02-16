@@ -1,3 +1,7 @@
-{{ inventory_hostname }}.control.packetframe.com {
+api.packetframe.com {
     reverse_proxy localhost:5000
+}
+
+acme-validation.packetframe.com {
+    reverse_proxy localhost:5001
 }
