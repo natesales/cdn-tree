@@ -1,0 +1,13 @@
+[Unit]
+Description=Packetframe API
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+User=packetframe
+Group=packetframe
+ExecStart=/usr/bin/packetframe-api
+
+[Install]
+WantedBy=multi-user.target

@@ -14,14 +14,27 @@
 - name: Deploy
   hosts: controlplane
   tasks:
+    - name: Copy service file
+      template:
+        src: packetframe-api.service
+        dest: /lib/systemd/system/packetframe-api.service
+      register: api_service
+
+    - name: Restart service
+      systemd:
+        name: packetframe-api
+        state: restarted
+        enabled: yes
+      when: api_service.changed
+
     - name: Copy API binary
       copy:
         src: ../dist/api
-        dest: /root/api
+        dest: /usr/bin/packetframe-api
         mode: +x
 
     - name: Get API version
-      shell: /root/api -v
+      shell: /usr/bin/packetframe-api -v
       register: api_version
     - name: Check API version
       debug:
