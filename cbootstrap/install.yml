@@ -1,6 +1,11 @@
 - name: Install
   hosts: controlplane
   tasks:
+    - name: Delete install user
+      user:
+        name: tmp
+        state: absent
+
     - name: Set hosts file
       template:
         src: hosts
