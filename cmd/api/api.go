@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"flag"
+	"os"
 	"strings"
 	"time"
 
@@ -19,6 +21,10 @@ import (
 	"github.com/natesales/cdn-tree/internal/util"
 	"github.com/natesales/cdn-tree/internal/validation"
 )
+
+var version = "development" // Set by build process
+
+var showVersion = flag.Bool("v", false, "show version information")
 
 var (
 	db       *database.Database
@@ -328,6 +334,13 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 }
 
 func main() {
+	flag.Parse()
+
+	if *showVersion {
+		log.Printf("Packetframe API version %s\n", version)
+		os.Exit(0)
+	}
+
 	log.SetLevel(log.DebugLevel)
 
 	db = database.New("mongodb://localhost:27017")
