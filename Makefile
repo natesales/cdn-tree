@@ -15,3 +15,9 @@ api:
 
 client:
 	go build -ldflags $(LDFLAGS) -o $(DIST_DIR)/client cmd/client/client.go
+
+controller-install:
+	cd cbootstrap && ansible-playbook -i hosts.yml install.yml
+
+controller-deploy:
+	cd cbootstrap && ansible-playbook -i hosts.yml deploy.yml
