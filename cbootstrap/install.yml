@@ -111,13 +111,13 @@
 
     - name: Copy MongoDB config
       template:
-        src: mongod.conf.conf
-        dest: /etc/mongod.conf.conf
+        src: mongod.conf
+        dest: /etc/mongod.conf
       register: mongo_config
 
     - name: Apply MongoDB config
       systemd:
-        name: mongod.conf
+        name: mongod
         state: restarted
         enabled: true
       when: mongo_config.changed
