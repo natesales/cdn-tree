@@ -13,3 +13,8 @@ The cdnv3 control plane is separated into a few services and daemons.
 - the API is written in Go with [GoFiber](https://github.com/gofiber/fiber) and is used for internal and externally facing interactions
 - the database is a MongoDB replica set over a full mesh over WireGuard that runs on all the controllers in the control plane
 - the client code runs on ECAs (edge nodes) and communicates with the control plane over gRPC with protobuf
+
+### Service Ports
+
+- 5000: API
+- 5001: ACME Validation API
