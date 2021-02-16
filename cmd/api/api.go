@@ -330,7 +330,6 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 func main() {
 	log.SetLevel(log.DebugLevel)
 
-	// TODO: Replica set
 	db = database.New("mongodb://localhost:27017")
 
 	// Type/data validator

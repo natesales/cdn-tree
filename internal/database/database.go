@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"strings"
 	"time"
 )
 
@@ -37,6 +38,24 @@ func New(url string) *Database {
 		log.Fatal(err)
 	}
 	log.Debugln("Connected to database")
+
+	cursor, err := client.Database("admin").RunCommandCursor(NewContext(10*time.Second), bson.M{"replSetGetStatus": 1})
+	if err != nil {
+		if strings.Contains(err.Error(), "NoReplicationEnabled") {
+			log.Info("switching to single member database")
+		} else {
+			log.Fatalf("admin query: %v", err)
+		}
+	} else {
+		for cursor.Next(ctx) {
+			var result bson.M
+			err := cursor.Decode(&result)
+			if err != nil {
+				log.Fatal(err)
+			}
+			log.Println(result)
+		}
+	}
 
 	// Create unique zone indices
 	for collection, key := range map[string]string{
