@@ -3,5 +3,6 @@ api.packetframe.com {
 }
 
 acme-validation.packetframe.com {
+    tls internal
     reverse_proxy localhost:5001
 }
