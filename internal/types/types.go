@@ -11,6 +11,7 @@ type Node struct {
 	Provider   string  `json:"provider" validate:"required"`
 	Latitude   float32 `json:"latitude" validate:"required"`
 	Longitude  float32 `json:"longitude" validate:"required"`
+	Region     string  `json:"region" validate:"region"`
 	Authorized bool    `json:"-"`
 }
 

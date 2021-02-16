@@ -33,3 +33,8 @@ func validateDnsLabel(fl validator.FieldLevel) bool {
 	_, err := dns.NewRR(fl.Field().String()) // ignore resulting RR
 	return err != nil
 }
+
+// validateRegion validates that a provided region string is one of the permitted values
+func validateRegion(fl validator.FieldLevel) bool {
+	return util.Includes([]string{"us-west", "us-central", "eu-west", "eu-central"}, fl.Field().String())
+}
