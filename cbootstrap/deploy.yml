@@ -4,6 +4,12 @@
     - name: Build
       make:
         chdir: ../
+    - name: Get API version
+      shell: ../dist/api -v
+      register: local_api_version
+    - name: Show local API version
+      debug:
+        msg: "{{ local_api_version.stdout }}"
 
 - name: Deploy
   hosts: controlplane
@@ -12,3 +18,12 @@
       copy:
         src: ../dist/api
         dest: /root/api
+        mode: +x
+
+    - name: Get API version
+      shell: /root/api -v
+      register: api_version
+    - name: Check API version
+      debug:
+        msg: "{{ api_version.stdout }}"
+      failed_when: api_version.stdout != hostvars.localhost.local_api_version.stdout
