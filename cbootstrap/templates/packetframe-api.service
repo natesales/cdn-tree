@@ -6,7 +6,6 @@ After=network.target
 Type=simple
 Restart=always
 User=packetframe
-Group=packetframe
 ExecStart=/usr/bin/packetframe-api
 
 [Install]

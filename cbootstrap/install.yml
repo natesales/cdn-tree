@@ -10,7 +10,6 @@
     - name: Create API user
       user:
         name: packetframe
-        group: packetframe
         state: present
 
     - name: Set hosts file
