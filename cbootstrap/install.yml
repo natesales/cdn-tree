@@ -98,18 +98,29 @@
         state: enabled
         policy: deny
 
-#    - name: Copy MongoDB config
-#      template:
-#        src: mongod
-#        dest: /etc/mongod.conf
-#      register: mongo_config
-#
-#    - name: Apply MongoDB config
-#      systemd:
-#        name: mongod
-#        state: restarted
-#        enabled: true
-#      when: mongo_config.changed
+    - name: Set timezone variables
+      copy:
+        content='America/Los_Angeles'
+        dest=/etc/timezone
+        owner=root
+        group=root
+        mode=0644
+
+    - name: Apply timezone
+      command: dpkg-reconfigure --frontend noninteractive tzdata
+
+    - name: Copy MongoDB config
+      template:
+        src: mongod.conf.conf
+        dest: /etc/mongod.conf.conf
+      register: mongo_config
+
+    - name: Apply MongoDB config
+      systemd:
+        name: mongod.conf
+        state: restarted
+        enabled: true
+      when: mongo_config.changed
 #
 #    - name: Copy Caddyfile
 #      template:
