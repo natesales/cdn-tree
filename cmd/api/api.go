@@ -344,7 +344,7 @@ func main() {
 
 	log.SetLevel(log.DebugLevel)
 
-	db = database.New("mongodb://localhost:27017")
+	db = database.New()
 
 	// Type/data validator
 	validate = validator.New()

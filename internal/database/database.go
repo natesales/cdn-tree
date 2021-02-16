@@ -24,9 +24,9 @@ func NewContext(duration time.Duration) context.Context {
 }
 
 // New constructs a new database object
-func New(url string) *Database {
+func New() *Database {
 	ctx := NewContext(10 * time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(url))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func New(url string) *Database {
 		if strings.Contains(err.Error(), "NoReplicationEnabled") {
 			log.Info("switching to single member database")
 		} else {
-			log.Fatalf("admin query: %v", err)
+			log.Fatalf("admin replSetGetStatus: %v", err)
 		}
 	} else {
 		for cursor.Next(ctx) {
