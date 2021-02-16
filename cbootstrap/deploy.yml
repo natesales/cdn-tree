@@ -1,0 +1,14 @@
+- name: Build
+  hosts: localhost
+  tasks:
+    - name: Build
+      make:
+        chdir: ../
+
+- name: Deploy
+  hosts: controlplane
+  tasks:
+    - name: Copy API binary
+      copy:
+        src: ../dist/api
+        dest: /root/api

@@ -2,4 +2,3 @@
   hosts: controlplane
   roles:
     - install
-    - deploy
