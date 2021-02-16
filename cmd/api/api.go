@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -337,7 +338,7 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		log.Printf("Packetframe API version %s\n", version)
+		fmt.Printf("Packetframe API version %s\n", version)
 		os.Exit(0)
 	}
 
