@@ -100,11 +100,11 @@
 
     - name: Set timezone variables
       copy:
-        content='America/Los_Angeles'
-        dest=/etc/timezone
-        owner=root
-        group=root
-        mode=0644
+        content: "America/Los_Angeles"
+        dest: /etc/timezone
+        owner: root
+        group: root
+        mode: 0644
 
     - name: Apply timezone
       command: dpkg-reconfigure --frontend noninteractive tzdata
