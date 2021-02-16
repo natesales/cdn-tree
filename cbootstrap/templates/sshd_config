@@ -2,7 +2,7 @@ Port 22
 ListenAddress {{ ansible_host }}
 ListenAddress {{ ipv6 }}
 
-PermitRootLogin yes
+PermitRootLogin prohibit-password
 
 PubkeyAuthentication yes
 PasswordAuthentication yes
