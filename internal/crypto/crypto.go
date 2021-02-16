@@ -3,9 +3,15 @@ package crypto
 import (
 	"crypto/rand"
 	"crypto/subtle"
+	"crypto/tls"
 	"fmt"
 	"log"
 	"math/big"
+	"net/http"
+	"os"
+	"path/filepath"
+
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/miekg/dns"
 	"golang.org/x/crypto/argon2"
@@ -90,4 +96,30 @@ func ValidHash(payload []byte, plaintext string) bool {
 
 	providedHash := argon2IDKey([]byte(plaintext), salt)
 	return subtle.ConstantTimeCompare(hash, providedHash) == 1
+}
+
+// AcmeValidationHandler creates an HTTP ACME validation server
+func AcmeValidationHandler(domain string) {
+	// Create the cache directory
+	dir := filepath.Join(os.TempDir(), "autocert-cache")
+	if err := os.MkdirAll(dir, 0700); err == nil {
+		log.Fatal(err)
+	}
+
+	// create the autocert.Manager with domains and path to the cache
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(domain),
+		Cache:      autocert.DirCache(dir),
+	}
+
+	// create the server itself
+	server := &http.Server{
+		Addr:      ":5001",
+		TLSConfig: &tls.Config{GetCertificate: certManager.GetCertificate},
+	}
+
+	// serve HTTPS
+	log.Printf("Serving http/https for: %+v", domain)
+	log.Fatal(server.ListenAndServe())
 }
