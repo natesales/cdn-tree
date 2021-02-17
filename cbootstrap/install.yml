@@ -1,7 +1,8 @@
 - name: Install
   hosts: controlplane
   roles:
-#    - install-misc
-#    - install-packages
-    - install-bgp
+    - install-misc
+    - install-packages
     - install-network
+    - install-wireguard
+    - install-bgp

@@ -4,22 +4,9 @@
     dest: /etc/network/interfaces.d/dummy0
   register: dummy_iface_config
 
-- name: Bring up dummy interface
-  shell: ifup dummy0
+- name: Bounce dummy interface
+  shell: ifdown dummy0 ; ifup dummy0
   when: dummy_iface_config.changed
-
-- name: Configure WireGuard interfaces
-  template:
-    src: wg0.conf
-    dest: "/etc/wireguard/wg0.conf"
-  register: wg_config
-
-- name: Enable WireGuard startup
-  systemd:
-    name: wg-quick@wg0
-    enabled: true
-    state: restarted
-  when: wg_config.changed
 
 - name: Allow SSH access from admin allowlist
   ufw:

@@ -1,0 +1,12 @@
+- name: Configure WireGuard interfaces
+  template:
+    src: wg0.conf
+    dest: "/etc/wireguard/wg0.conf"
+  register: wg_config
+
+- name: Enable WireGuard startup
+  systemd:
+    name: wg-quick@wg0
+    enabled: true
+    state: restarted
+  when: wg_config.changed
