@@ -55,7 +55,7 @@ func mongoUri() (string, error) {
 
 	var dbHosts []string
 	for _, member := range result.Members {
-		dbHosts = append(dbHosts, member.Name+":27017")
+		dbHosts = append(dbHosts, member.Name)
 	}
 
 	return "mongodb://" + strings.Join(dbHosts, ",") + "/?replSet=packetframe", nil // nil error
@@ -85,7 +85,8 @@ func New() *Database {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Debugln("Connected to database")
+
+	log.Debugf("connected to database at %s\n", dbUri)
 
 	// Create unique zone indices
 	for collection, key := range map[string]string{
