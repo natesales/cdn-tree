@@ -2,6 +2,7 @@ package control
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +18,7 @@ import (
 // Manifest gets a list of zone:serial pairs
 func Manifest(db *database.Database) ([]map[string]interface{}, error) {
 	// Find all zones from database
-	cursor, err := db.Db.Collection("zones").Find(database.NewContext(10*time.Second), bson.M{})
+	cursor, err := db.Db.Collection("zones").Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err // nil data
 	}
@@ -26,7 +27,7 @@ func Manifest(db *database.Database) ([]map[string]interface{}, error) {
 	var zones []map[string]interface{}
 
 	// Iterate over each zone and add to local zones manifest
-	for cursor.Next(database.NewContext(10 * time.Second)) {
+	for cursor.Next(context.Background()) {
 		var zone types.Zone
 		err := cursor.Decode(&zone)
 		if err != nil {
@@ -43,7 +44,7 @@ func Manifest(db *database.Database) ([]map[string]interface{}, error) {
 // MassRequest sends an HTTP POST request to all edge nodes
 func MassRequest(db *database.Database, endpoint string, body interface{}) ([]*http.Response, error) {
 	// Find all zones from database
-	cursor, err := db.Db.Collection("nodes").Find(database.NewContext(10*time.Second), bson.M{})
+	cursor, err := db.Db.Collection("nodes").Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func MassRequest(db *database.Database, endpoint string, body interface{}) ([]*h
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	// Iterate over each zone and add to local zones manifest
-	for cursor.Next(database.NewContext(10 * time.Second)) {
+	for cursor.Next(context.Background()) {
 		var node types.Node
 		err := cursor.Decode(&node)
 		if err != nil {

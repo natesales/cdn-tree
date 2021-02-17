@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -63,7 +64,7 @@ func requireGenericAuth(ctx *fiber.Ctx) (error, types.User) {
 
 	// Find user by API key in the database
 	var user types.User
-	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"apikey": apiKey})
+	result := db.Db.Collection("users").FindOne(context.Background(), &bson.M{"apikey": apiKey})
 	// Decode database result into user struct
 	err := result.Decode(&user)
 	if err != nil {
@@ -91,7 +92,7 @@ func handleAddNode(ctx *fiber.Ctx) error {
 	}
 
 	// Insert the new node
-	_, err = db.Db.Collection("nodes").InsertOne(database.NewContext(10*time.Second), newNode)
+	_, err = db.Db.Collection("nodes").InsertOne(context.Background(), newNode)
 	if err != nil {
 		return sendResponse(ctx, 500, err, nil)
 	}
@@ -130,7 +131,7 @@ func handleAddBgpSession(ctx *fiber.Ctx) error {
 
 	// Push the new record
 	pushResult, err := db.Db.Collection("nodes").UpdateOne(
-		database.NewContext(10*time.Second),
+		context.Background(),
 		bson.M{"_id": nodeId},
 		bson.M{"$push": bson.M{"sessions": newSession}},
 	)
@@ -181,7 +182,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 	newZone.Records = []string{}
 
 	// Insert the new zone
-	_, err = db.Db.Collection("zones").InsertOne(database.NewContext(10*time.Second), newZone)
+	_, err = db.Db.Collection("zones").InsertOne(context.Background(), newZone)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
 			return sendResponse(ctx, 400, err, nil)
@@ -208,7 +209,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 	// Find zone
 	var zone types.Zone
-	result := db.Db.Collection("zones").FindOne(database.NewContext(10*time.Second), &bson.M{"_id": zoneID})
+	result := db.Db.Collection("zones").FindOne(context.Background(), &bson.M{"_id": zoneID})
 	err = result.Decode(&zone)
 	if err != nil || !util.Includes(zone.Users, user.ID) { // If error or the zone doesn't contain this user as authorized
 		return sendResponse(ctx, 400, err, "decoding zone")
@@ -241,7 +242,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 	// Push the new record
 	pushResult, err := db.Db.Collection("zones").UpdateOne(
-		database.NewContext(10*time.Second),
+		context.Background(),
 		bson.M{"_id": zoneID},
 		bson.M{"$push": bson.M{"records": recordRr.String()}},
 	)
@@ -290,7 +291,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 	newUser.Password = ""
 
 	// Insert the new node
-	_, err = db.Db.Collection("users").InsertOne(database.NewContext(10*time.Second), newUser)
+	_, err = db.Db.Collection("users").InsertOne(context.Background(), newUser)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key error collection") {
 			return sendResponse(ctx, 400, err, nil)
@@ -319,7 +320,7 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 
 	// Find user by email
 	var user types.User
-	result := db.Db.Collection("users").FindOne(database.NewContext(10*time.Second), &bson.M{"email": loginReq.Email})
+	result := db.Db.Collection("users").FindOne(context.Background(), &bson.M{"email": loginReq.Email})
 	err = result.Decode(&user)
 	if err != nil {
 		return sendResponse(ctx, 400, err, nil)

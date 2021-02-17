@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"strings"
-	"time"
 )
 
 // Database wraps a *mongo.Database
@@ -61,13 +60,6 @@ func mongoUri() (string, error) {
 	return "mongodb://" + strings.Join(dbHosts, ",") + "/?replSet=packetframe", nil // nil error
 }
 
-// NewContext returns a context with given duration
-func NewContext(duration time.Duration) context.Context {
-	// TODO: Remove this function and defer the cancel function
-	ctx, _ := context.WithTimeout(context.Background(), duration)
-	return ctx
-}
-
 // New constructs a new database object
 func New() *Database {
 	dbUri, err := mongoUri()
@@ -86,7 +78,7 @@ func New() *Database {
 		log.Fatal(err)
 	}
 
-	log.Debugf("connected to database at %s\n", dbUri)
+	log.Debugf("connected to database at %s", dbUri)
 
 	// Create unique zone indices
 	for collection, key := range map[string]string{
@@ -118,9 +110,8 @@ func (d Database) GetNode(id string) bson.M {
 	}
 
 	var node bson.M
-	ctx := NewContext(10 * time.Second)
 	// Run DB query
-	if err := d.Db.Collection("nodes").FindOne(ctx, bson.M{"_id": nodeObjectId}).Decode(&node); err != nil {
+	if err := d.Db.Collection("nodes").FindOne(context.Background(), bson.M{"_id": nodeObjectId}).Decode(&node); err != nil {
 		if err.Error() == "mongo: no documents in result" {
 			log.Debug(err)
 			return nil // Node with given ID doesn't exist, exit
