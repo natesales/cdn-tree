@@ -1,3 +1,4 @@
+// Package validation provides functions for struct data validation
 package validation
 
 import (

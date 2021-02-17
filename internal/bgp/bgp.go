@@ -1,3 +1,4 @@
+// Package bgp provides control functions for BGP operations
 package bgp
 
 import (

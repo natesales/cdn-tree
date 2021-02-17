@@ -1,3 +1,4 @@
+// Package crypto provides functions and types for cryptographic operations (DNSSEC, TLS, ARGON2)
 package crypto
 
 import (

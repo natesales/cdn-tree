@@ -1,3 +1,4 @@
+// Package control provides functions to interact with edge nodes
 package control
 
 import (

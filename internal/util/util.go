@@ -1,3 +1,4 @@
+// Package util includes general utility functions that aren't specific to a certain subsystem
 package util
 
 // Includes checks for array inclusion by means of linear search

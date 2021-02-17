@@ -1,3 +1,4 @@
+// Package database provides functions and types for interacting with MongoDB, as well as a message queue built on mongo
 package database
 
 import (
@@ -31,7 +32,7 @@ type QueueMessage struct {
 	LockedAt int64              `json:"-"`
 }
 
-// member contains a replica set member entry
+// member contains a replica set node entry
 type member struct {
 	Name     string `bson:"name"`
 	State    int    `bson:"state"`
