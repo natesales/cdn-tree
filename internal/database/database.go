@@ -9,11 +9,26 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"strings"
+	"time"
+)
+
+// Error constants
+var (
+	ErrNoMessagesInQueue = errors.New("no messages in queue")
 )
 
 // Database wraps a *mongo.Database
 type Database struct {
 	Db *mongo.Database
+}
+
+// QueueMessage stores a single queue entry
+type QueueMessage struct {
+	ID       primitive.ObjectID `json:"-" bson:"_id,omitempty"`
+	Payload  map[string]string  `json:"payload"`
+	Created  int64              `json:"-"`
+	Locked   bool               `json:"-"`
+	LockedAt int64              `json:"-"`
 }
 
 // member contains a replica set member entry
@@ -128,4 +143,60 @@ func (d Database) GetNode(id string) bson.M {
 	}
 
 	return node
+}
+
+// AddQueueMessage appends a message to the queue
+func (d Database) AddQueueMessage(message QueueMessage) error {
+	// Set created timestamp
+	message.Created = time.Now().UnixNano()
+
+	// Disable work lock
+	message.Locked = false
+
+	// Insert the new message
+	_, err := d.Db.Collection("queue").InsertOne(context.Background(), message)
+	if err != nil {
+		return err
+	}
+
+	return nil // nil error
+}
+
+// NextQueueMessage retrieves a single queue message
+func (d Database) NextQueueMessage() (QueueMessage, error) {
+	// Find an available and unlocked queue message
+	var message QueueMessage
+	if err := d.Db.Collection("queue").FindOne(context.Background(), bson.M{"locked": false}).Decode(&message); err != nil {
+		if err.Error() == "mongo: no documents in result" {
+			return QueueMessage{}, ErrNoMessagesInQueue
+		} else {
+			return QueueMessage{}, err // Other error
+		}
+	}
+
+	// Lock the message
+	updateResult, err := d.Db.Collection("queue").UpdateOne(
+		context.Background(),
+		bson.M{"_id": message.ID},
+		bson.M{"$set": bson.M{"locked": true, "lockedat": time.Now().UnixNano()}},
+	)
+	if err != nil {
+		return QueueMessage{}, err // Other error
+	}
+
+	if updateResult.ModifiedCount < 1 {
+		return QueueMessage{}, errors.New("unable to lock queue message") // Other error
+	}
+
+	return message, nil // nil error
+}
+
+// Confirm marks a queue message as complete
+func (d Database) QueueConfirm(message QueueMessage) error {
+	_, err := d.Db.Collection("queue").DeleteOne(context.Background(), bson.M{"_id": message.ID})
+	if err != nil {
+		return err
+	}
+
+	return nil // nil error
 }
