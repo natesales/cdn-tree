@@ -388,6 +388,10 @@ func main() {
 		return sendResponse(ctx, 200, "sent update", nil)
 	})
 
+	app.Get("/debug/version", func(ctx *fiber.Ctx) error {
+		return sendResponse(ctx, 200, version, nil)
+	})
+
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":5000"))
 }
