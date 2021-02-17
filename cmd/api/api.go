@@ -389,7 +389,7 @@ func main() {
 	})
 
 	app.Get("/debug/version", func(ctx *fiber.Ctx) error {
-		return sendResponse(ctx, 200, version, nil)
+		return sendResponse(ctx, 200, "retrieved version", "sent update")
 	})
 
 	log.Println("Starting API")
