@@ -19,12 +19,6 @@
         src: packetframe-api.service
         dest: /lib/systemd/system/packetframe-api.service
 
-    - name: Restart service
-      systemd:
-        name: packetframe-api
-        state: restarted
-        enabled: yes
-
     - name: Copy API binary
       copy:
         src: ../dist/api
@@ -38,3 +32,9 @@
       debug:
         msg: "{{ api_version.stdout }}"
       failed_when: api_version.stdout != hostvars.localhost.local_api_version.stdout
+
+    - name: Restart service
+      systemd:
+        name: packetframe-api
+        state: restarted
+        enabled: yes
