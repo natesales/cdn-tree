@@ -1,0 +1,9 @@
+- name: Copy BIRD config
+  template:
+    src: bird.conf
+    dest: /etc/bird/bird.conf
+  register: bird_config
+
+- name: Apply bird config
+  shell: birdc conf
+  when: bird_config.changed

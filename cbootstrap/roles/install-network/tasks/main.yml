@@ -1,0 +1,54 @@
+- name: Create dummy interface
+  template:
+    src: dummy0
+    dest: /etc/network/interfaces.d/dummy0
+  register: dummy_iface_config
+
+- name: Bring up dummy interface
+  shell: ifup dummy0
+  when: dummy_iface_config.changed
+
+- name: Configure WireGuard interfaces
+  template:
+    src: wg0.conf
+    dest: "/etc/wireguard/wg0.conf"
+  register: wg_config
+
+- name: Enable WireGuard startup
+  systemd:
+    name: wg-quick@wg0
+    enabled: true
+    state: restarted
+  when: wg_config.changed
+
+- name: Allow SSH access from admin allowlist
+  ufw:
+    rule: allow
+    src: "{{ item }}"
+    to_port: 22
+  loop: "{{ admin_allowlist }}"
+
+- name: Allow all VPN-internal access between nodes
+  ufw:
+    rule: allow
+    src: "{{ hostvars[item].internal_ip }}"
+  with_items: "{{ groups.controlplane }}"
+
+- name: Allow IPv4 WireGuard between nodes
+  ufw:
+    rule: allow
+    to_port: 28179
+    src: "{{ hostvars[item].ansible_host }}"
+  with_items: "{{ groups.controlplane }}"
+
+- name: Allow IPv6 WireGuard between nodes
+  ufw:
+    rule: allow
+    to_port: 28179
+    src: "{{ hostvars[item].ipv6 }}"
+  with_items: "{{ groups.controlplane }}"
+
+- name: Enable default deny UFW policy
+  ufw:
+    state: enabled
+    policy: deny

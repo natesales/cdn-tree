@@ -1,0 +1,66 @@
+- name: Delete install user
+  user:
+    name: tmp
+    state: absent
+    remove: yes
+
+- name: Create API user
+  user:
+    name: packetframe
+    state: present
+
+- name: Set hosts file
+  template:
+    src: hosts
+    dest: /etc/hosts
+
+- name: Configure sshd
+  template:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+  register: sshd_config
+
+- name: Restart sshd
+  systemd:
+    name: sshd
+    state: restarted
+  when: sshd_config.changed
+
+- name: Set hostname
+  copy:
+    content: "{{ inventory_hostname }}.control.packetframe.com"
+    dest: /etc/hostname
+
+- name: Set timezone variables
+  copy:
+    content: "America/Los_Angeles"
+    dest: /etc/timezone
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Apply timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+- name: Copy MongoDB config
+  template:
+    src: mongod.conf
+    dest: /etc/mongod.conf
+  register: mongo_config
+
+- name: Apply MongoDB config
+  systemd:
+    name: mongod
+    state: restarted
+    enabled: true
+  when: mongo_config.changed
+
+#- name: Copy Caddyfile
+#  template:
+#    src: Caddyfile
+#    dest: /etc/caddy/Caddyfile
+#  register: caddy_config
+#
+#- name: Apply Caddy config
+#  shell: caddy reload -config /etc/caddy/Caddyfile
+#  when: caddy_config.changed
