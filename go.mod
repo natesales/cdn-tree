@@ -7,6 +7,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/eapache/channels v1.1.0 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
+	github.com/go-acme/lego/v4 v4.2.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gofiber/fiber/v2 v2.4.1
 	github.com/gogo/protobuf v1.3.2 // indirect

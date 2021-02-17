@@ -1,18 +1,20 @@
 package crypto
 
 import (
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/subtle"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"math/big"
-	"net/http"
-	"os"
-	"path/filepath"
 
-	"golang.org/x/crypto/acme/autocert"
-
+	"github.com/go-acme/lego/v4/certcrypto"
+	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v4/lego"
+	"github.com/go-acme/lego/v4/registration"
 	"github.com/miekg/dns"
 	"golang.org/x/crypto/argon2"
 )
@@ -98,28 +100,73 @@ func ValidHash(payload []byte, plaintext string) bool {
 	return subtle.ConstantTimeCompare(hash, providedHash) == 1
 }
 
-// AcmeValidationHandler creates an HTTP ACME validation server
-func AcmeValidationHandler(domain string) {
-	// Create the cache directory
-	dir := filepath.Join(os.TempDir(), "autocert-cache")
-	if err := os.MkdirAll(dir, 0700); err == nil {
+// ACME Client process
+
+// AcmeUser implements acme.User
+type AcmeUser struct {
+	Email        string
+	Registration *registration.Resource
+	key          crypto.PrivateKey
+}
+
+func (u *AcmeUser) GetEmail() string {
+	return u.Email
+}
+
+func (u AcmeUser) GetRegistration() *registration.Resource {
+	return u.Registration
+}
+
+func (u *AcmeUser) GetPrivateKey() crypto.PrivateKey {
+	return u.key
+}
+
+func NewCertRequest(domain string) {
+	// Create a user. New accounts need an email and private key to start.
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	// create the autocert.Manager with domains and path to the cache
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(domain),
-		Cache:      autocert.DirCache(dir),
+	myUser := AcmeUser{
+		Email: "you@yours.com",
+		key:   privateKey,
 	}
 
-	// create the server itself
-	server := &http.Server{
-		Addr:      ":5001",
-		TLSConfig: &tls.Config{GetCertificate: certManager.GetCertificate},
+	config := lego.NewConfig(&myUser)
+
+	//config.CADirURL = "https://acme-v02.api.letsencrypt.org/directory"
+	config.CADirURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
+	config.Certificate.KeyType = certcrypto.RSA2048
+
+	// A client facilitates communication with the CA server.
+	client, err := lego.NewClient(config)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	// serve HTTPS
-	log.Printf("Serving http/https for: %+v", domain)
-	log.Fatal(server.ListenAndServe())
+	err = client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", "5001"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// New users will need to register
+	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	if err != nil {
+		log.Fatal(err)
+	}
+	myUser.Registration = reg
+
+	request := certificate.ObtainRequest{
+		Domains: []string{domain},
+		Bundle:  true,
+	}
+
+	certificates, err := client.Certificate.Obtain(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Each certificate comes back with the cert bytes, the bytes of the client's private key, and a certificate URL.
+	fmt.Printf("%#v\n", certificates)
 }
