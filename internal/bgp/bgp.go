@@ -97,7 +97,6 @@ func (d Daemon) Announce(prefix net.IPNet, nexthop net.IPAddr) error {
 // New constructs a new Daemon
 func New(asn uint32, routerId string) *Daemon {
 	s := gobgp.NewBgpServer()
-	//go s.Serve()
 
 	// global configuration
 	if err := s.StartBgp(context.Background(), &api.StartBgpRequest{
@@ -117,4 +116,9 @@ func New(asn uint32, routerId string) *Daemon {
 	}
 
 	return &Daemon{BgpServer: s}
+}
+
+// Listen starts the BGP server
+func (d Daemon) Listen() {
+	d.BgpServer.Serve()
 }
