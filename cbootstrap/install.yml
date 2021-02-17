@@ -34,6 +34,16 @@
         content: "{{ inventory_hostname }}.control.packetframe.com"
         dest: /etc/hostname
 
+    - name: Create dummy interface
+      template:
+        src: dummy0
+        dest: /etc/network/interfaces.d/dummy0
+      register: dummy_iface_config
+
+    - name: Bring up dummy interface
+      shell: ifup dummy0
+      when: dummy_iface_config.changed
+
     - name: Add WireGuard repo
       apt_repository:
         repo: deb http://deb.debian.org/debian buster-backports main contrib non-free
@@ -59,6 +69,16 @@
         repo: deb https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
         state: present
 
+    - name: Add debian sid repo
+      apt_repository:
+        repo: deb http://deb.debian.org/debian/ sid main
+        state: present
+
+    - name: Set default release
+      copy:
+        content: APT::Default-Release "stable";
+        dest: /etc/apt/apt.conf.d/default-release
+
     - name: Install system packages
       apt:
         update_cache: yes
@@ -72,6 +92,11 @@
           - cargo
           - caddy
           - ufw
+
+    - name: Install BIRD2 from sid
+      apt:
+        name: bird2
+        default_release: sid
 
     - name: Configure WireGuard interfaces
       template:
@@ -141,6 +166,16 @@
         state: restarted
         enabled: true
       when: mongo_config.changed
+
+    - name: Copy BIRD config
+      template:
+        src: bird.conf
+        dest: /etc/bird/bird.conf
+      register: bird_config
+
+    - name: Apply bird config
+      shell: birdc conf
+      when: bird_config.changed
 
     #- name: Copy Caddyfile
     #  template:
