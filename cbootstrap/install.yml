@@ -4,5 +4,6 @@
     - install-misc
     - install-packages
     - install-network
+    - install-ufw
     - install-wireguard
     - install-bgp
