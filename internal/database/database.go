@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -11,9 +12,53 @@ import (
 	"time"
 )
 
-// Database wraps a mongo.Database
+// Database wraps a *mongo.Database
 type Database struct {
 	Db *mongo.Database
+}
+
+// member contains a replica set member entry
+type member struct {
+	Name     string `bson:"name"`
+	State    int    `bson:"state"`
+	StateStr string `bson:"stateStr"`
+	PingMs   uint   `bson:"pingMs"`
+	Health   int    `bson:"health"`
+}
+
+// replicaSetResponse stores the response returned by replSetGetStatus
+type replicaSetResponse struct {
+	Members []member `bson:"members"`
+}
+
+// mongoUri connects to a local MongoDB server and extracts and assembles replica set information into a fully formed URI. If no replica set exists (running in development), it returns mongodb://localhost:27017
+func mongoUri() (string, error) {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		return "", errors.New("client connect: " + err.Error()) // empty mongo URI
+	}
+
+	res := client.Database("admin").RunCommand(context.Background(), bson.D{{"replSetGetStatus", 1}})
+	if res.Err() != nil {
+		if strings.Contains(res.Err().Error(), "NoReplicationEnabled") {
+			return "mongodb://localhost:27017", nil // nil error
+		} else {
+			return "", errors.New("replSetGetStatus query: " + res.Err().Error()) // empty mongo URI
+		}
+	}
+
+	var result replicaSetResponse
+	err = res.Decode(&result)
+	if err != nil {
+		return "", errors.New("decoding result: " + err.Error()) // empty mongo URI
+	}
+
+	var dbHosts []string
+	for _, member := range result.Members {
+		dbHosts = append(dbHosts, member.Name+":27017")
+	}
+
+	return "mongodb://" + strings.Join(dbHosts, ",") + "/?replSet=packetframe", nil // nil error
 }
 
 // NewContext returns a context with given duration
@@ -25,37 +70,22 @@ func NewContext(duration time.Duration) context.Context {
 
 // New constructs a new database object
 func New() *Database {
-	ctx := NewContext(10 * time.Second)
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	dbUri, err := mongoUri()
+	if err != nil {
+		log.Fatalf("mongoUri: %v", err)
+	}
+
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(dbUri))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Check the connection
-	ctx = NewContext(10 * time.Second)
-	err = client.Ping(ctx, nil)
+	err = client.Ping(context.Background(), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Debugln("Connected to database")
-
-	cursor, err := client.Database("admin").RunCommandCursor(NewContext(10*time.Second), bson.M{"replSetGetStatus": 1})
-	if err != nil {
-		if strings.Contains(err.Error(), "NoReplicationEnabled") {
-			log.Info("switching to single member database")
-		} else {
-			log.Fatalf("admin replSetGetStatus: %v", err)
-		}
-	} else {
-		for cursor.Next(ctx) {
-			var result bson.M
-			err := cursor.Decode(&result)
-			if err != nil {
-				log.Fatal(err)
-			}
-			log.Println(result)
-		}
-	}
 
 	// Create unique zone indices
 	for collection, key := range map[string]string{
