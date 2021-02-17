@@ -18,14 +18,12 @@
       template:
         src: packetframe-api.service
         dest: /lib/systemd/system/packetframe-api.service
-      register: api_service
 
     - name: Restart service
       systemd:
         name: packetframe-api
         state: restarted
         enabled: yes
-      when: api_service.changed
 
     - name: Copy API binary
       copy:
