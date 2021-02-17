@@ -16,6 +16,12 @@ type Daemon struct {
 	BgpServer *gobgp.BgpServer
 }
 
+// Session stores a BGP session
+type Session struct {
+	Address string `json:"address" validate:"required"`
+	Asn     uint32 `json:"asn" validate:"required"`
+}
+
 // Config stores a router's local configuration
 type Config struct {
 	Asn      uint32

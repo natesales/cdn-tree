@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/natesales/cdn-tree/internal/bgp"
 	"os"
 	"strings"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/natesales/cdn-tree/internal/control"
 	"github.com/natesales/cdn-tree/internal/crypto"
 	"github.com/natesales/cdn-tree/internal/database"
-	"github.com/natesales/cdn-tree/internal/types"
 	"github.com/natesales/cdn-tree/internal/util"
 	"github.com/natesales/cdn-tree/internal/validation"
 )
@@ -32,6 +32,14 @@ var (
 	db       *database.Database
 	validate *validator.Validate
 )
+
+// Request types
+
+// loginRequest stores a username/password combination
+type loginRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
 
 // Helpers
 
@@ -58,17 +66,17 @@ func sendResponse(ctx *fiber.Ctx, code int, reason interface{}, data interface{}
 }
 
 // requireGenericAuth checks if a user is authenticated and is present in the database
-func requireGenericAuth(ctx *fiber.Ctx) (error, types.User) {
+func requireGenericAuth(ctx *fiber.Ctx) (error, database.User) {
 	// Get API key header
 	apiKey := string(ctx.Request().Header.Peek("Authorization"))
 
 	// Find user by API key in the database
-	var user types.User
+	var user database.User
 	result := db.Db.Collection("users").FindOne(context.Background(), &bson.M{"apikey": apiKey})
 	// Decode database result into user struct
 	err := result.Decode(&user)
 	if err != nil {
-		return err, types.User{}
+		return err, database.User{}
 	}
 
 	return nil, user // no error; a user with this API key exists
@@ -78,7 +86,7 @@ func requireGenericAuth(ctx *fiber.Ctx) (error, types.User) {
 
 // handleAddNode handles a HTTP POST request to add a new node
 func handleAddNode(ctx *fiber.Ctx) error {
-	newNode := new(types.Node)
+	newNode := new(database.Node)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newNode); err != nil {
@@ -116,7 +124,7 @@ func handleAddBgpSession(ctx *fiber.Ctx) error {
 	}
 
 	// New session struct
-	newSession := new(types.BgpSession)
+	newSession := new(bgp.Session)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newSession); err != nil {
@@ -155,7 +163,7 @@ func handleAddZone(ctx *fiber.Ctx) error {
 		return sendResponse(ctx, 403, errors.New("unauthorized"), nil)
 	}
 
-	newZone := new(types.Zone)
+	newZone := new(database.Zone)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newZone); err != nil {
@@ -208,7 +216,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	}
 
 	// Find zone
-	var zone types.Zone
+	var zone database.Zone
 	result := db.Db.Collection("zones").FindOne(context.Background(), &bson.M{"_id": zoneID})
 	err = result.Decode(&zone)
 	if err != nil || !util.Includes(zone.Users, user.ID) { // If error or the zone doesn't contain this user as authorized
@@ -216,7 +224,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 	}
 
 	// New record struct
-	newRecord := new(types.Record)
+	newRecord := new(database.DNSRecord)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newRecord); err != nil {
@@ -261,7 +269,7 @@ func handleAddRecord(ctx *fiber.Ctx) error {
 
 // handleAddUser handles a HTTP POST request to create a new USER
 func handleAddUser(ctx *fiber.Ctx) error {
-	newUser := new(types.User)
+	newUser := new(database.User)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(newUser); err != nil {
@@ -305,7 +313,7 @@ func handleAddUser(ctx *fiber.Ctx) error {
 
 // handleUserLogin handles a HTTP POST request to authenticate a user
 func handleUserLogin(ctx *fiber.Ctx) error {
-	loginReq := new(types.LoginRequest)
+	loginReq := new(loginRequest)
 
 	// Parse body into struct
 	if err := ctx.BodyParser(loginReq); err != nil {
@@ -319,7 +327,7 @@ func handleUserLogin(ctx *fiber.Ctx) error {
 	}
 
 	// Find user by email
-	var user types.User
+	var user database.User
 	result := db.Db.Collection("users").FindOne(context.Background(), &bson.M{"email": loginReq.Email})
 	err = result.Decode(&user)
 	if err != nil {

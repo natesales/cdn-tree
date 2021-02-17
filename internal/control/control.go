@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/natesales/cdn-tree/internal/database"
-	"github.com/natesales/cdn-tree/internal/types"
 )
 
 // Manifest gets a list of zone:serial pairs
@@ -29,7 +28,7 @@ func Manifest(db *database.Database) ([]map[string]interface{}, error) {
 
 	// Iterate over each zone and add to local zones manifest
 	for cursor.Next(context.Background()) {
-		var zone types.Zone
+		var zone database.Zone
 		err := cursor.Decode(&zone)
 		if err != nil {
 			return nil, err // nil error
@@ -61,7 +60,7 @@ func MassRequest(db *database.Database, endpoint string, body interface{}) ([]*h
 
 	// Iterate over each zone and add to local zones manifest
 	for cursor.Next(context.Background()) {
-		var node types.Node
+		var node database.Node
 		err := cursor.Decode(&node)
 		if err != nil {
 			return nil, err // nil data

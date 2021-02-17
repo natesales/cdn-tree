@@ -4,6 +4,7 @@ package database
 import (
 	"context"
 	"errors"
+	"github.com/natesales/cdn-tree/internal/crypto"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,6 +22,43 @@ var (
 // Database wraps a *mongo.Database
 type Database struct {
 	Db *mongo.Database
+}
+
+// Node stores a single edge node
+type Node struct {
+	ID         string  `json:"-" bson:"_id,omitempty"`
+	Endpoint   string  `json:"endpoint" validate:"required"`
+	Provider   string  `json:"provider" validate:"required"`
+	Latitude   float32 `json:"latitude" validate:"required"`
+	Longitude  float32 `json:"longitude" validate:"required"`
+	Region     string  `json:"region" validate:"region"`
+	Authorized bool    `json:"-"`
+}
+
+// DNSRecord stores a DNS RR string
+type DNSRecord struct {
+	RRString string `json:"rr" validate:"required"`
+}
+
+// Zone stores a DNS zone
+type Zone struct {
+	ID      string           `json:"-" bson:"_id,omitempty"`
+	Zone    string           `json:"zone" validate:"required,fqdn"`
+	Users   []string         `json:"-"`
+	Serial  uint64           `json:"-"`
+	Records []string         `json:"-"`
+	DNSSEC  crypto.DNSSECKey `json:"-"`
+}
+
+// User stores a CDN user
+type User struct {
+	ID       string `json:"-" bson:"_id,omitempty"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+	APIKey   string `json:"-"`
+	Enabled  bool   `json:"-"`
+	Admin    bool   `json:"-"`
+	Hash     []byte `json:"-"`
 }
 
 // QueueMessage stores a single queue entry
