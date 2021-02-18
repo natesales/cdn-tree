@@ -25,6 +25,30 @@
     src: "{{ hostvars[item].ipv6 }}"
   with_items: "{{ groups.controlplane }}"
 
+- name: Allow IPv4 HTTP API
+  ufw:
+    rule: allow
+    to_port: 80
+    src: "{{ address4 }}"
+
+- name: Allow IPv6 HTTP API
+  ufw:
+    rule: allow
+    to_port: 80
+    src: "{{ address6 }}"
+
+- name: Allow IPv4 HTTPS API
+  ufw:
+    rule: allow
+    to_port: 443
+    src: "{{ address4 }}"
+
+- name: Allow IPv6 HTTPS API
+  ufw:
+    rule: allow
+    to_port: 443
+    src: "{{ address6 }}"
+
 - name: Enable default deny UFW policy
   ufw:
     state: enabled
