@@ -353,7 +353,9 @@ func main() {
 
 	log.SetLevel(log.DebugLevel)
 
+	log.Debugln("connecting to database")
 	db = database.New()
+	log.Debugln("connected to database")
 
 	// Type/data validator
 	validate = validator.New()
