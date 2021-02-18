@@ -14,11 +14,6 @@ import (
 	"time"
 )
 
-// Error constants
-var (
-	ErrNoMessagesInQueue = errors.New("no messages in queue")
-)
-
 // Database wraps a *mongo.Database
 type Database struct {
 	Db *mongo.Database
@@ -228,11 +223,8 @@ func (d Database) NextQueueMessage() (QueueMessage, error) {
 	// Find an available and unlocked queue message
 	var message QueueMessage
 	if err := d.Db.Collection("queue").FindOne(context.Background(), bson.M{"locked": false}).Decode(&message); err != nil {
-		if err.Error() == "mongo: no documents in result" {
-			return QueueMessage{}, ErrNoMessagesInQueue
-		} else {
-			return QueueMessage{}, err // Other error
-		}
+		return QueueMessage{}, err // Other error
+		// mongo.ErrNoDocuments
 	}
 
 	// Lock the message
