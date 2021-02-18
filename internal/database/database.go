@@ -241,3 +241,23 @@ func (d Database) QueueConfirm(message QueueMessage) error {
 
 	return nil // nil error
 }
+
+// ListQueue returns all messages in queue
+func (d Database) ListQueue() ([]QueueMessage, error) {
+	cursor, err := d.Db.Collection("queue").Find(context.Background(), bson.M{})
+	if err != nil {
+		return nil, err // nil message array
+	}
+
+	var messages []QueueMessage
+	for cursor.Next(context.Background()) {
+		var message QueueMessage
+		if err := cursor.Decode(&message); err != nil {
+			return nil, err // nil message array
+		}
+		// Append the message to the list
+		messages = append(messages, message)
+	}
+
+	return messages, nil // nil error
+}
