@@ -400,6 +400,15 @@ func main() {
 		return sendResponse(ctx, 200, "retrieved version", "sent update")
 	})
 
+	app.Get("/debug/queue/list", func(ctx *fiber.Ctx) error {
+		messages, err := db.ListQueue()
+		if err != nil {
+			return sendResponse(ctx, 500, err, nil)
+		}
+
+		return sendResponse(ctx, 200, "retrieved queue items", messages)
+	})
+
 	log.Println("Starting API")
 	log.Fatal(app.Listen(":5000"))
 }
