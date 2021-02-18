@@ -55,12 +55,12 @@
     enabled: true
   when: mongo_config.changed
 
-#- name: Copy Caddyfile
-#  template:
-#    src: Caddyfile
-#    dest: /etc/caddy/Caddyfile
-#  register: caddy_config
-#
-#- name: Apply Caddy config
-#  shell: caddy reload -config /etc/caddy/Caddyfile
-#  when: caddy_config.changed
+- name: Copy Caddyfile
+  template:
+    src: Caddyfile
+    dest: /etc/caddy/Caddyfile
+  register: caddy_config
+
+- name: Apply Caddy config
+  shell: caddy reload -config /etc/caddy/Caddyfile
+  when: caddy_config.changed
