@@ -184,6 +184,8 @@ func (d Database) GetNode(id string) bson.M {
 	return node
 }
 
+// Message Queue
+
 // AddQueueMessage appends a message to the queue
 func (d Database) AddQueueMessage(message QueueMessage) error {
 	// Set created timestamp
@@ -230,7 +232,7 @@ func (d Database) NextQueueMessage() (QueueMessage, error) {
 	return message, nil // nil error
 }
 
-// Confirm marks a queue message as complete
+// QueueConfirm marks a queue message as complete
 func (d Database) QueueConfirm(message QueueMessage) error {
 	_, err := d.Db.Collection("queue").DeleteOne(context.Background(), bson.M{"_id": message.ID})
 	if err != nil {
