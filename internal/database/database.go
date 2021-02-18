@@ -70,6 +70,26 @@ type QueueMessage struct {
 	LockedAt int64              `json:"-"`
 }
 
+// Metadata label "enum"
+type MetaLabel int
+
+const (
+	LabelAcmeAccount MetaLabel = iota
+	LabelNetworkConfig
+)
+
+// String gets the string representation of MetaLabel
+func (l MetaLabel) String() string {
+	return [...]string{"LabelNetworkConfig", "LabelNetworkConfig"}[l]
+}
+
+// MetadataElement stores a document in the metadata collection in mongo
+type MetadataElement struct {
+	ID      primitive.ObjectID `bson:"-" bson:"_id,omitempty"`
+	Label   string             `bson:"label"`
+	Payload map[string]string  `bson:"payload"`
+}
+
 // member contains a replica set node entry
 type member struct {
 	Name     string `bson:"name"`
@@ -260,4 +280,15 @@ func (d Database) ListQueue() ([]QueueMessage, error) {
 	}
 
 	return messages, nil // nil error
+}
+
+// AddMetadata adds a MetadataElement to the database
+func (d Database) AddMetadata(m MetadataElement) error {
+	// Insert the new message
+	_, err := d.Db.Collection("metadata").InsertOne(context.Background(), m)
+	if err != nil {
+		return err
+	}
+
+	return nil // nil error
 }
