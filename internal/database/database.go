@@ -284,6 +284,7 @@ func (d Database) ListQueue() ([]QueueMessage, error) {
 
 // AddMetadata adds a MetadataElement to the database
 func (d Database) AddMetadata(m MetadataElement) error {
+	// TODO: UpdateOne if exist
 	// Insert the new message
 	_, err := d.Db.Collection("metadata").InsertOne(context.Background(), m)
 	if err != nil {
@@ -291,4 +292,14 @@ func (d Database) AddMetadata(m MetadataElement) error {
 	}
 
 	return nil // nil error
+}
+
+// GetMetadata returns the metadata object with specified label
+func (d Database) GetMetadata(l MetaLabel) (MetadataElement, error) {
+	var element MetadataElement
+	if err := d.Db.Collection("metadata").FindOne(context.Background(), bson.M{"label": l.String()}).Decode(&element); err != nil {
+		return MetadataElement{}, err
+	}
+
+	return element, nil // nil error
 }
