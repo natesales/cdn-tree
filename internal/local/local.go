@@ -37,7 +37,11 @@ func LoadCaddyConfig(config map[string]interface{}) error {
 
 	fmt.Println("response Status:", resp.Status)
 	fmt.Println("response Headers:", resp.Header)
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("response Body:", string(body))
 
 	return nil // nil error
