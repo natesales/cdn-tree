@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/natesales/cdn-tree/internal/bgp"
 	"os"
 	"strings"
 	"time"
@@ -17,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
+	"github.com/natesales/cdn-tree/internal/bgp"
 	"github.com/natesales/cdn-tree/internal/control"
 	"github.com/natesales/cdn-tree/internal/crypto"
 	"github.com/natesales/cdn-tree/internal/database"
