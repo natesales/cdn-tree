@@ -122,6 +122,7 @@ func (u *AcmeUser) GetPrivateKey() crypto.PrivateKey {
 	return u.key
 }
 
+// NewCertRequest requests a new TLS certificate
 func NewCertRequest(domain string) {
 	// Create a user. New accounts need an email and private key to start.
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
