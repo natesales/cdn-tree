@@ -1,5 +1,9 @@
 # Packetframe Control Plane v3
 
+### Archival Notice
+
+This codebase has been deprecated in favor of the new microservice architecture.
+
 Version 3 of the Packetframe CDN control plane. This is an incomplete experiment - for the real, currently-deployed code, see https://github.com/packetframe/cdn
 
 ### Development
